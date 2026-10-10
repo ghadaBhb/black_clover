@@ -1,9 +1,8 @@
 import os
-import json
-import sqlite3
+import re
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, Response, make_response
-from database import get_db, init_db, DEFAULT_FLOWERS
+from database import get_db, init_db
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'gdg-black-clover-secret-mana-key-2026')
@@ -18,6 +17,7 @@ def query_db(query, args=(), one=False):
     cur.execute(query, args)
     r = cur.fetchall()
     conn.commit()
+    cur.close()
     conn.close()
     return (r[0] if r else None) if one else r
 
@@ -25,14 +25,15 @@ def modify_db(query, args=()):
     conn = get_db()
     cur = conn.cursor()
     cur.execute(query, args)
-    last_id = cur.lastrowid
+    returned = cur.fetchone() if cur.description else None
     conn.commit()
+    cur.close()
     conn.close()
-    return last_id
+    return returned.get('id') if returned else None
 
 def log_activity(event_type, description):
     modify_db(
-        "INSERT INTO activity_log (event_type, description) VALUES (?, ?)",
+        "INSERT INTO activity_log (event_type, description) VALUES (%s, %s)",
         (event_type, description)
     )
 
@@ -84,18 +85,26 @@ def register():
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         captain = request.form.get('captain', '').strip()
+        captain_email = request.form.get('captain_email', '').strip()
         color = request.form.get('color', 'google-blue')
         motto = request.form.get('motto', '').strip()
         
         member_names = request.form.getlist('members[]')
+        member_emails = [email.strip() for email in request.form.getlist('emails[]')]
         member_roles = request.form.getlist('roles[]')
         
         if not name or not captain:
             flash("Squad Name and Captain Name are required!", "danger")
             return redirect(url_for('register'))
+
+        email_pattern = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
+        emails_to_check = [captain_email] + member_emails
+        if any(email and not email_pattern.fullmatch(email) for email in emails_to_check):
+            flash("Enter a valid email address for each member, or leave it blank.", "danger")
+            return redirect(url_for('register'))
         
         # Check uniqueness
-        existing = query_db("SELECT id FROM squads WHERE LOWER(name) = LOWER(?)", (name,), one=True)
+        existing = query_db("SELECT id FROM squads WHERE LOWER(name) = LOWER(%s)", (name,), one=True)
         if existing:
             flash(f"A squad named '{name}' is already registered in the Magic Knights!", "warning")
             return redirect(url_for('register'))
@@ -103,23 +112,29 @@ def register():
         conn = get_db()
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO squads (name, captain, color, motto) VALUES (?, ?, ?, ?)",
+            "INSERT INTO squads (name, captain, color, motto) VALUES (%s, %s, %s, %s) RETURNING id",
             (name, captain, color, motto)
         )
-        squad_id = cur.lastrowid
+        squad_id = cur.fetchone()['id']
         
         # Add captain as member if not in list
         cur.execute(
-            "INSERT INTO members (squad_id, name, role) VALUES (?, ?, 'Captain')",
-            (squad_id, captain)
+            "INSERT INTO members (squad_id, name, role, email) VALUES (%s, %s, 'Captain', %s)",
+            (squad_id, captain, captain_email or None)
         )
         
-        for m_name, m_role in zip(member_names, member_roles):
+        for index, (m_name, m_role) in enumerate(zip(member_names, member_roles)):
             m_name = m_name.strip()
+            m_email = member_emails[index] if index < len(member_emails) else ''
             if m_name and m_name.lower() != captain.lower():
                 cur.execute(
-                    "INSERT INTO members (squad_id, name, role) VALUES (?, ?, ?)",
-                    (squad_id, m_name, m_role.strip() or 'Magic Knight')
+                    "INSERT INTO members (squad_id, name, role, email) VALUES (%s, %s, %s, %s)",
+                    (
+                        squad_id,
+                        m_name,
+                        m_role.strip() or 'Magic Knight',
+                        m_email or None,
+                    )
                 )
         
         conn.commit()
@@ -149,12 +164,12 @@ def squads_list():
 
 @app.route('/squad/<int:squad_id>')
 def squad_detail(squad_id):
-    squad = query_db("SELECT * FROM squads WHERE id = ?", (squad_id,), one=True)
+    squad = query_db("SELECT * FROM squads WHERE id = %s", (squad_id,), one=True)
     if not squad:
         flash("Squad not found!", "danger")
         return redirect(url_for('squads_list'))
     
-    members = query_db("SELECT * FROM members WHERE squad_id = ? ORDER BY id ASC", (squad_id,))
+    members = query_db("SELECT * FROM members WHERE squad_id = %s ORDER BY id ASC", (squad_id,))
     
     # Get all flowers and whether this squad claimed them
     flowers = query_db('''
@@ -163,7 +178,7 @@ def squad_detail(squad_id):
                c.claimed_at,
                c.claimed_by
         FROM flowers f
-        LEFT JOIN claims c ON f.id = c.flower_id AND c.squad_id = ?
+        LEFT JOIN claims c ON f.id = c.flower_id AND c.squad_id = %s
         ORDER BY f.id ASC
     ''', (squad_id,))
     
@@ -270,12 +285,12 @@ def api_claim():
     except ValueError:
         return jsonify({"status": "error", "message": "Invalid squad ID"}), 400
 
-    squad = query_db("SELECT * FROM squads WHERE id = ?", (squad_id,), one=True)
+    squad = query_db("SELECT * FROM squads WHERE id = %s", (squad_id,), one=True)
     if not squad:
         return jsonify({"status": "error", "message": "Squad does not exist!"}), 404
 
     # Lookup flower by passcode
-    flower = query_db("SELECT * FROM flowers WHERE UPPER(passcode) = ?", (passcode,), one=True)
+    flower = query_db("SELECT * FROM flowers WHERE UPPER(passcode) = %s", (passcode,), one=True)
     if not flower:
         return jsonify({
             "status": "error", 
@@ -283,7 +298,7 @@ def api_claim():
         }), 400
 
     # Check if already claimed
-    already = query_db("SELECT id FROM claims WHERE squad_id = ? AND flower_id = ?", (squad_id, flower['id']), one=True)
+    already = query_db("SELECT id FROM claims WHERE squad_id = %s AND flower_id = %s", (squad_id, flower['id']), one=True)
     if already:
         return jsonify({
             "status": "error", 
@@ -292,7 +307,7 @@ def api_claim():
 
     # Insert claim
     modify_db(
-        "INSERT INTO claims (squad_id, flower_id, claimed_by) VALUES (?, ?, ?)",
+        "INSERT INTO claims (squad_id, flower_id, claimed_by) VALUES (%s, %s, %s)",
         (squad_id, flower['id'], claimed_by)
     )
 
@@ -306,7 +321,7 @@ def api_claim():
         SELECT COUNT(c.id) as flowers_count, COALESCE(SUM(f.points), 0) as total_points
         FROM claims c
         JOIN flowers f ON c.flower_id = f.id
-        WHERE c.squad_id = ?
+        WHERE c.squad_id = %s
     ''', (squad_id,), one=True)
 
     return jsonify({
@@ -336,16 +351,16 @@ def api_admin_toggle_claim():
     squad_id = int(data.get('squad_id'))
     flower_id = int(data.get('flower_id'))
 
-    existing = query_db("SELECT id FROM claims WHERE squad_id = ? AND flower_id = ?", (squad_id, flower_id), one=True)
-    squad = query_db("SELECT name FROM squads WHERE id = ?", (squad_id,), one=True)
-    flower = query_db("SELECT name, points FROM flowers WHERE id = ?", (flower_id,), one=True)
+    existing = query_db("SELECT id FROM claims WHERE squad_id = %s AND flower_id = %s", (squad_id, flower_id), one=True)
+    squad = query_db("SELECT name FROM squads WHERE id = %s", (squad_id,), one=True)
+    flower = query_db("SELECT name, points FROM flowers WHERE id = %s", (flower_id,), one=True)
 
     if existing:
-        modify_db("DELETE FROM claims WHERE id = ?", (existing['id'],))
+        modify_db("DELETE FROM claims WHERE id = %s", (existing['id'],))
         log_activity("ADMIN_REVOKE", f"Organizer revoked Flower #{flower_id} ({flower['name']}) from '{squad['name']}'")
         action = "revoked"
     else:
-        modify_db("INSERT INTO claims (squad_id, flower_id, claimed_by) VALUES (?, ?, 'Organizer')", (squad_id, flower_id))
+        modify_db("INSERT INTO claims (squad_id, flower_id, claimed_by) VALUES (%s, %s, 'Organizer')", (squad_id, flower_id))
         log_activity("ADMIN_GRANT", f"Organizer granted Flower #{flower_id} ({flower['name']}) to '{squad['name']}'")
         action = "granted"
 
@@ -368,8 +383,8 @@ def api_admin_edit_flower():
 
     modify_db('''
         UPDATE flowers
-        SET name = ?, character_theme = ?, riddle = ?, location_hint = ?, passcode = ?, points = ?
-        WHERE id = ?
+        SET name = %s, character_theme = %s, riddle = %s, location_hint = %s, passcode = %s, points = %s
+        WHERE id = %s
     ''', (name, character_theme, riddle, location_hint, passcode, points, flower_id))
 
     log_activity("ADMIN_EDIT", f"Updated Flower #{flower_id} ({name}) settings/riddle")
@@ -401,14 +416,14 @@ def api_admin_add_flower():
     if points < 0:
         flash("Flower points cannot be negative.", "danger")
         return redirect(url_for('admin'))
-    if query_db("SELECT id FROM flowers WHERE UPPER(passcode) = ?", (passcode,), one=True):
+    if query_db("SELECT id FROM flowers WHERE UPPER(passcode) = %s", (passcode,), one=True):
         flash("That passcode is already assigned to another flower.", "danger")
         return redirect(url_for('admin'))
 
-    flower_id = query_db("SELECT COALESCE(MAX(id), 0) + 1 FROM flowers", one=True)[0]
+    flower_id = query_db("SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM flowers", one=True)['next_id']
     modify_db('''
         INSERT INTO flowers (id, name, character_theme, riddle, location_hint, passcode, points)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
     ''', (flower_id, name, character_theme, riddle, location_hint, passcode, points))
 
     log_activity("ADMIN_ADD", f"Added Flower #{flower_id} ({name})")
@@ -423,11 +438,11 @@ def api_admin_delete_squad():
         return redirect(url_for('admin'))
 
     squad_id = int(request.form.get('squad_id'))
-    squad = query_db("SELECT name FROM squads WHERE id = ?", (squad_id,), one=True)
+    squad = query_db("SELECT name FROM squads WHERE id = %s", (squad_id,), one=True)
     if squad:
-        modify_db("DELETE FROM squads WHERE id = ?", (squad_id,))
-        modify_db("DELETE FROM claims WHERE squad_id = ?", (squad_id,))
-        modify_db("DELETE FROM members WHERE squad_id = ?", (squad_id,))
+        modify_db("DELETE FROM squads WHERE id = %s", (squad_id,))
+        modify_db("DELETE FROM claims WHERE squad_id = %s", (squad_id,))
+        modify_db("DELETE FROM members WHERE squad_id = %s", (squad_id,))
         log_activity("ADMIN_DELETE", f"Deleted Squad '{squad['name']}' and its records")
         flash(f"Squad '{squad['name']}' was removed.", "info")
 
@@ -455,7 +470,7 @@ def export_csv():
         SELECT s.id, s.name, s.captain, 
                COUNT(c.id) as flowers_found, 
                COALESCE(SUM(f.points), 0) as total_points,
-               GROUP_CONCAT(f.id) as claimed_flower_ids
+               STRING_AGG(f.id::text, ',') as claimed_flower_ids
         FROM squads s
         LEFT JOIN claims c ON s.id = c.squad_id
         LEFT JOIN flowers f ON c.flower_id = f.id

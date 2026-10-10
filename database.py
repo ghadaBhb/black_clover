@@ -1,11 +1,11 @@
-import sqlite3
 import os
-from datetime import datetime
+import psycopg
+from psycopg.rows import dict_row
+from dotenv import load_dotenv
 
-DB_PATH = os.environ.get(
-    'DATABASE_PATH',
-    os.path.join(os.path.dirname(__file__), 'black_clover.db')
-)
+load_dotenv()
+
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 DEFAULT_FLOWERS = [
     {
@@ -242,84 +242,21 @@ DEFAULT_SQUADS = [
 ]
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL is not configured. Set it to your Supabase PostgreSQL connection string.")
+    return psycopg.connect(DATABASE_URL, sslmode='require', row_factory=dict_row)
 
 def init_db(seed_sample_data=True):
     conn = get_db()
     cursor = conn.cursor()
 
-    # Squads table
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS squads (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE NOT NULL,
-        captain TEXT NOT NULL,
-        color TEXT DEFAULT 'google-blue',
-        motto TEXT DEFAULT '',
-        avatar TEXT DEFAULT 'clover',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    ''')
-
-    # Members table
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS members (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        squad_id INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        role TEXT DEFAULT 'Knight',
-        FOREIGN KEY (squad_id) REFERENCES squads(id) ON DELETE CASCADE
-    )
-    ''')
-
-    # Flowers table
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS flowers (
-        id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL,
-        character_theme TEXT NOT NULL,
-        riddle TEXT NOT NULL,
-        location_hint TEXT NOT NULL,
-        passcode TEXT UNIQUE NOT NULL,
-        points INTEGER DEFAULT 100,
-        color TEXT DEFAULT '#4285F4'
-    )
-    ''')
-
-    # Claims table
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS claims (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        squad_id INTEGER NOT NULL,
-        flower_id INTEGER NOT NULL,
-        claimed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        claimed_by TEXT DEFAULT 'Squad Member',
-        notes TEXT DEFAULT '',
-        FOREIGN KEY (squad_id) REFERENCES squads(id) ON DELETE CASCADE,
-        FOREIGN KEY (flower_id) REFERENCES flowers(id) ON DELETE CASCADE,
-        UNIQUE (squad_id, flower_id)
-    )
-    ''')
-
-    # Activity log table
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS activity_log (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        event_type TEXT NOT NULL,
-        description TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    ''')
-
     # Seed flowers if empty
     cursor.execute('SELECT COUNT(*) FROM flowers')
-    if cursor.fetchone()[0] == 0:
+    if cursor.fetchone()['count'] == 0:
         for f in DEFAULT_FLOWERS:
             cursor.execute('''
             INSERT INTO flowers (id, name, character_theme, riddle, location_hint, passcode, points, color)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             ''', (f['id'], f['name'], f['character_theme'], f['riddle'], f['location_hint'], f['passcode'], f['points'], f['color']))
         
         cursor.execute('''
@@ -330,25 +267,37 @@ def init_db(seed_sample_data=True):
     # Seed sample squads if requested and table empty
     if seed_sample_data:
         cursor.execute('SELECT COUNT(*) FROM squads')
-        if cursor.fetchone()[0] == 0:
+        if cursor.fetchone()['count'] == 0:
+            seeded_squad_ids = []
             for s in DEFAULT_SQUADS:
                 cursor.execute('''
                 INSERT INTO squads (name, captain, color, motto)
-                VALUES (?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s)
+                RETURNING id
                 ''', (s['name'], s['captain'], s['color'], s['motto']))
-                squad_id = cursor.lastrowid
+                squad_id = cursor.fetchone()['id']
+                seeded_squad_ids.append(squad_id)
                 for idx, m in enumerate(s['members']):
                     role = 'Captain' if idx == 0 else ('Vice-Captain' if idx == 1 else 'Magic Knight')
                     cursor.execute('''
                     INSERT INTO members (squad_id, name, role)
-                    VALUES (?, ?, ?)
+                    VALUES (%s, %s, %s)
                     ''', (squad_id, m, role))
-            
-            # Add a couple of initial claims for demonstration
-            cursor.execute('INSERT OR IGNORE INTO claims (squad_id, flower_id, claimed_by) VALUES (1, 1, "Asta El-Khatib")')
-            cursor.execute('INSERT OR IGNORE INTO claims (squad_id, flower_id, claimed_by) VALUES (1, 5, "Asta El-Khatib")')
-            cursor.execute('INSERT OR IGNORE INTO claims (squad_id, flower_id, claimed_by) VALUES (2, 4, "Yuno Benali")')
-            cursor.execute('INSERT OR IGNORE INTO claims (squad_id, flower_id, claimed_by) VALUES (3, 2, "Fuegoleon Mansouri")')
+
+            demo_claims = (
+                (seeded_squad_ids[0], 1, 'Asta El-Khatib'),
+                (seeded_squad_ids[0], 5, 'Asta El-Khatib'),
+                (seeded_squad_ids[1], 4, 'Yuno Benali'),
+                (seeded_squad_ids[2], 2, 'Fuegoleon Mansouri'),
+            )
+            for squad_id, flower_id, claimed_by in demo_claims:
+                cursor.execute('SELECT id FROM flowers WHERE id = %s', (flower_id,))
+                if cursor.fetchone():
+                    cursor.execute('''
+                    INSERT INTO claims (squad_id, flower_id, claimed_by)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (squad_id, flower_id) DO NOTHING
+                    ''', (squad_id, flower_id, claimed_by))
 
             cursor.execute('''
             INSERT INTO activity_log (event_type, description)
@@ -356,8 +305,9 @@ def init_db(seed_sample_data=True):
             ''')
 
     conn.commit()
+    cursor.close()
     conn.close()
 
 if __name__ == '__main__':
     init_db(seed_sample_data=True)
-    print("Database initialized successfully at:", DB_PATH)
+    print("Supabase database initialized successfully.")

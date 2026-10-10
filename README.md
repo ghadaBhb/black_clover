@@ -32,15 +32,18 @@ Or run them individually:
 * **v1**: Double click `run_v1.bat` (or `python app.py`) &rarr; **[http://localhost:5000](http://localhost:5000)**
 * **v2**: Double click `run_v2.bat` (or `python v2/app.py`) &rarr; **[http://localhost:5001](http://localhost:5001)**
 
-### Deploy v1 on Render
+### Use Supabase and deploy v1 on Render
 
 This repository's Render Blueprint deploys the Flask app in `app.py` (v1):
 
-1. Push this repository to GitHub and create a new **Blueprint** in Render for it.
-2. Choose the repository and apply the settings in `render.yaml`.
-3. After the service is live, use its Render URL. The generated admin PIN is available in the service's environment settings.
+1. Create the five tables (`squads`, `members`, `flowers`, `claims`, and `activity_log`) in Supabase using the schema for this app.
+2. In Supabase, copy the PostgreSQL connection string from **Connect**. Keep it private.
+3. For local development, put that value in the root `.env` file as `DATABASE_URL=...`. The app reads `.env` automatically.
+4. Push this repository to GitHub and create a new **Blueprint** in Render for it.
+5. Choose the repository and apply the settings in `render.yaml`. Enter the Supabase connection string for the `DATABASE_URL` environment variable when prompted in Render.
+6. After the service is live, use its Render URL. Keep `DATABASE_URL`, `SECRET_KEY`, and `ADMIN_PIN` private.
 
-The Blueprint provisions a 1 GB persistent disk for SQLite, so it requires a paid Render web-service plan. Keep the generated `SECRET_KEY` and `ADMIN_PIN` private. The app also supports `DATABASE_PATH`, `SECRET_KEY`, and `ADMIN_PIN` environment variables when deploying outside the Blueprint.
+On first startup, the app inserts its default flowers and demo squads if those tables are empty. Existing rows are left in place. The app now uses Supabase directly; it does not automatically copy existing records from `black_clover.db`.
 
 ---
 

@@ -6,13 +6,9 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn --workers 1 --threads 4 --bind 0.0.0.0:$PORT app:app
     healthCheckPath: /
-    disk:
-      name: black-clover-data
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
-      - key: DATABASE_PATH
-        value: /var/data/black_clover.db
+      - key: DATABASE_URL
+        sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: ADMIN_PIN
