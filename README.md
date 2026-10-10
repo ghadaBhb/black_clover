@@ -37,10 +37,10 @@ Or run them individually:
 This repository's Render Blueprint deploys the Flask app in `app.py` (v1):
 
 1. Create the five tables (`squads`, `members`, `flowers`, `claims`, and `activity_log`) in Supabase using the schema for this app.
-2. In Supabase, copy the PostgreSQL connection string from **Connect**. Keep it private.
+2. In Supabase, open **Connect** and choose the **Session pooler** connection string (IPv4-compatible). Do not use the direct database connection for Render unless your Render service has IPv6 connectivity or you have enabled Supabase IPv4 support. Keep the connection string private.
 3. For local development, put that value in the root `.env` file as `DATABASE_URL=...`. The app reads `.env` automatically.
 4. Push this repository to GitHub and create a new **Blueprint** in Render for it.
-5. Choose the repository and apply the settings in `render.yaml`. Enter the Supabase connection string for the `DATABASE_URL` environment variable when prompted in Render.
+5. Choose the repository and apply the settings in `render.yaml`. Enter the Supabase **Session pooler** connection string for the `DATABASE_URL` environment variable when prompted in Render.
 6. After the service is live, use its Render URL. Keep `DATABASE_URL`, `SECRET_KEY`, and `ADMIN_PIN` private.
 
 On first startup, the app inserts its default flowers and demo squads if those tables are empty. Existing rows are left in place. The app now uses Supabase directly; it does not automatically copy existing records from `black_clover.db`.
