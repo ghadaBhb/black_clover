@@ -56,3 +56,33 @@
     transform: translateY(-2px);
     box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.5);
 }
+
+html,
+body {
+    max-width: 100%;
+    overflow-x: clip;
+}
+
+input,
+select,
+textarea,
+button {
+    max-width: 100%;
+}
+
+@media (max-width: 640px) {
+    .projector-mode .projector-container {
+        padding: 1rem !important;
+    }
+
+    .projector-mode .rank-row {
+        padding: 0.5rem !important;
+        font-size: 0.875rem !important;
+    }
+}
+
+@media (max-width: 360px) {
+    #sfx-toggle {
+        display: none;
+    }
+}

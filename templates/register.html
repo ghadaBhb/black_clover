@@ -3,7 +3,7 @@
 {% block title %}Register Squad | GDG x Black Clover Open Day{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+<div class="max-w-3xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
 
     <!-- Header -->
     <div class="text-center space-y-2 mb-8">
@@ -11,7 +11,7 @@
             <span>⚔️</span>
             <span>Magic Knights Entrance Exam</span>
         </div>
-        <h1 class="text-3xl font-black text-white font-anime tracking-wider">
+        <h1 class="text-2xl sm:text-3xl font-black text-white font-anime tracking-wider">
             REGISTER YOUR MAGIC SQUAD
         </h1>
         <p class="text-sm text-slate-400 max-w-lg mx-auto">
@@ -20,7 +20,7 @@
     </div>
 
     <!-- Registration Card -->
-    <div class="bg-google-card border border-google-border rounded-2xl p-6 sm:p-8 shadow-2xl relative">
+    <div class="bg-google-card border border-google-border rounded-2xl p-4 sm:p-8 shadow-2xl relative">
         
         <!-- Quick Preset Squad Buttons -->
         <div class="mb-6 pb-6 border-b border-google-border">
@@ -103,9 +103,9 @@
 
                 <div id="members-container" class="space-y-2.5">
                     <!-- Default Member Row 1 -->
-                    <div class="member-row flex items-center gap-2">
-                        <input type="text" name="members[]" placeholder="Teammate 2 Name" class="flex-grow bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-google-green">
-                        <select name="roles[]" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-300 focus:outline-none">
+                    <div class="member-row flex flex-wrap items-center gap-2">
+                        <input type="text" name="members[]" placeholder="Teammate 2 Name" class="w-full min-w-0 sm:flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-google-green">
+                        <select name="roles[]" class="min-w-0 flex-1 sm:flex-none bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-300 focus:outline-none">
                             <option value="Vice-Captain">Vice-Captain</option>
                             <option value="Scout">Scout / Tracker</option>
                             <option value="Mana Specialist">Mana Specialist</option>
@@ -115,9 +115,9 @@
                     </div>
 
                     <!-- Default Member Row 2 -->
-                    <div class="member-row flex items-center gap-2">
-                        <input type="text" name="members[]" placeholder="Teammate 3 Name" class="flex-grow bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-google-green">
-                        <select name="roles[]" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-300 focus:outline-none">
+                    <div class="member-row flex flex-wrap items-center gap-2">
+                        <input type="text" name="members[]" placeholder="Teammate 3 Name" class="w-full min-w-0 sm:flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-google-green">
+                        <select name="roles[]" class="min-w-0 flex-1 sm:flex-none bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-300 focus:outline-none">
                             <option value="Scout">Scout / Tracker</option>
                             <option value="Vice-Captain">Vice-Captain</option>
                             <option value="Mana Specialist">Mana Specialist</option>
@@ -153,10 +153,10 @@
         const container = document.getElementById('members-container');
         const count = container.children.length + 2;
         const div = document.createElement('div');
-        div.className = 'member-row flex items-center gap-2 animate-in fade-in duration-200';
+        div.className = 'member-row flex flex-wrap items-center gap-2 animate-in fade-in duration-200';
         div.innerHTML = `
-            <input type="text" name="members[]" placeholder="Teammate ${count} Name" class="flex-grow bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-google-green">
-            <select name="roles[]" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-300 focus:outline-none">
+            <input type="text" name="members[]" placeholder="Teammate ${count} Name" class="w-full min-w-0 sm:flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-google-green">
+            <select name="roles[]" class="min-w-0 flex-1 sm:flex-none bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-300 focus:outline-none">
                 <option value="Magic Knight">Magic Knight</option>
                 <option value="Scout">Scout / Tracker</option>
                 <option value="Mana Specialist">Mana Specialist</option>

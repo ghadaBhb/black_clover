@@ -6,7 +6,7 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
     <!-- Grimoire Header / Squad Cover -->
-    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-google-surface to-slate-950 border-2 border-google-border p-6 sm:p-8 shadow-2xl">
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-google-surface to-slate-950 border-2 border-google-border p-4 sm:p-8 shadow-2xl">
         <!-- Glow matching squad color -->
         <div class="absolute -top-24 right-10 w-64 h-64 rounded-full blur-3xl opacity-25 pointer-events-none
             {% if squad.color == 'google-red' %} bg-google-red
@@ -24,7 +24,7 @@
                     <span class="text-xs text-slate-400 font-mono">ID: #{{ squad.id }}</span>
                 </div>
 
-                <h1 class="text-3xl sm:text-4xl font-black text-white font-anime tracking-wide">
+                <h1 class="text-2xl sm:text-4xl font-black text-white font-anime tracking-wide break-words">
                     {{ squad.name }}
                 </h1>
                 
@@ -47,7 +47,7 @@
             </div>
 
             <!-- Stats Box -->
-            <div class="flex items-center gap-4 bg-slate-950/70 border border-slate-800 p-4 rounded-2xl min-w-[240px] justify-around">
+            <div class="flex w-full sm:w-auto items-center gap-4 bg-slate-950/70 border border-slate-800 p-4 rounded-2xl sm:min-w-[240px] justify-around">
                 <div class="text-center">
                     <div class="text-3xl font-black text-white font-mono">{{ claimed_count }} <span class="text-xs text-slate-500">/ 20</span></div>
                     <div class="text-[11px] text-slate-400 uppercase font-semibold">Flowers Found</div>
@@ -82,8 +82,8 @@
             <p class="text-xs text-slate-400">Enter the Rune Passcode printed on the physical flower card.</p>
         </div>
 
-        <form onsubmit="handleDirectGrimoireClaim(event, {{ squad.id }})" class="flex items-center gap-2 w-full sm:w-auto">
-            <input type="text" id="grimoire-code-input" placeholder="e.g. BRIAR-01" required class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-mono uppercase tracking-wider focus:outline-none focus:border-google-blue flex-grow sm:w-44 placeholder:text-slate-600">
+        <form onsubmit="handleDirectGrimoireClaim(event, {{ squad.id }})" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <input type="text" id="grimoire-code-input" placeholder="e.g. BRIAR-01" required class="min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-mono uppercase tracking-wider focus:outline-none focus:border-google-blue flex-grow sm:w-44 placeholder:text-slate-600">
             <button type="submit" class="px-4 py-2 rounded-lg bg-gradient-to-r from-google-blue to-google-green text-white text-xs font-bold hover:brightness-110 active:scale-95 transition whitespace-nowrap">
                 Unlock
             </button>
@@ -91,12 +91,12 @@
     </div>
 
     <!-- Filter Buttons -->
-    <div class="flex items-center justify-between">
-        <h2 class="text-xl font-black text-white font-anime tracking-wide flex items-center gap-2">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h2 class="text-lg sm:text-xl font-black text-white font-anime tracking-wide flex items-center gap-2">
             <span>🌸</span> The 20 Flower Pages
         </h2>
 
-        <div class="flex items-center gap-1.5 text-xs">
+        <div class="flex flex-wrap items-center gap-1.5 text-xs">
             <button onclick="filterFlowerGrid('all')" id="btn-filter-all" class="px-3 py-1.5 rounded-lg bg-slate-800 text-white font-bold border border-slate-600">
                 All (20)
             </button>
