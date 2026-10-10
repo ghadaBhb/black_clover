@@ -44,6 +44,34 @@ function handleLeaderboardUpdate(data) {
     lastLeaderboardData = squads;
 
     renderLeaderboardTable(squads, totalFlowers);
+    renderFlowerStatuses(data.flowers || []);
+}
+
+function renderFlowerStatuses(flowers) {
+    const tbody = document.getElementById('flower-status-tbody');
+    const summary = document.getElementById('flower-status-summary');
+    if (!tbody || !summary) return;
+
+    const collectedCount = flowers.filter(flower => flower.is_collected).length;
+    summary.textContent = `${collectedCount} of ${flowers.length} collected`;
+
+    if (flowers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-slate-500 italic">No flowers have been added yet.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = flowers.map(flower => `
+        <tr class="hover:bg-slate-800/40 transition">
+            <td class="py-3 px-4 font-mono font-bold text-slate-400">#${flower.id}</td>
+            <td class="py-3 px-4 font-semibold text-white">${escapeHtml(flower.name)}</td>
+            <td class="py-3 px-4">
+                ${flower.is_collected
+                    ? `<span class="text-emerald-300 font-semibold">Collected by ${escapeHtml(flower.collected_by_team || 'a team')}</span>`
+                    : '<span class="text-amber-300 font-semibold">Not collected</span>'}
+            </td>
+            <td class="py-3 px-4 text-right font-mono font-bold text-amber-400">${flower.points}</td>
+        </tr>
+    `).join('');
 }
 
 function renderLeaderboardTable(squads, totalFlowers) {

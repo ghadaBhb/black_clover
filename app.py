@@ -89,7 +89,21 @@ def leaderboard():
         ORDER BY flowers_count DESC, total_points DESC, last_claim ASC
     ''')
     total_flowers = query_db("SELECT COUNT(*) as count FROM flowers", one=True)['count']
-    return render_template('leaderboard.html', squads=squads, total_flowers=total_flowers)
+    flowers = query_db('''
+        SELECT f.id, f.name, f.points,
+               c.id IS NOT NULL AS is_collected,
+               s.name AS collected_by_team
+        FROM flowers f
+        LEFT JOIN claims c ON c.flower_id = f.id
+        LEFT JOIN squads s ON s.id = c.squad_id
+        ORDER BY f.id ASC
+    ''')
+    return render_template(
+        'leaderboard.html',
+        squads=squads,
+        flowers=flowers,
+        total_flowers=total_flowers,
+    )
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -286,13 +300,23 @@ def api_leaderboard():
     
     total_flowers = query_db("SELECT COUNT(*) as count FROM flowers", one=True)['count']
     total_claims = query_db("SELECT COUNT(*) as count FROM claims", one=True)['count']
+    flowers = query_db('''
+        SELECT f.id, f.name, f.points,
+               c.id IS NOT NULL AS is_collected,
+               s.name AS collected_by_team
+        FROM flowers f
+        LEFT JOIN claims c ON c.flower_id = f.id
+        LEFT JOIN squads s ON s.id = c.squad_id
+        ORDER BY f.id ASC
+    ''')
     
     return jsonify({
         "status": "success",
         "total_flowers": total_flowers,
         "total_claims": total_claims,
         "timestamp": datetime.now().isoformat(),
-        "leaderboard": [dict(s) for s in squads]
+        "leaderboard": [dict(s) for s in squads],
+        "flowers": [dict(flower) for flower in flowers],
     })
 
 @app.route('/api/claim', methods=['POST'])
