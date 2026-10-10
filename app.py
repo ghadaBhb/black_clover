@@ -54,10 +54,6 @@ def index():
     total_claims = query_db("SELECT COUNT(*) as count FROM claims", one=True)['count']
     total_squads = len(squads)
     
-    recent_activity = query_db('''
-        SELECT * FROM activity_log ORDER BY id DESC LIMIT 8
-    ''')
-
     flowers = query_db("SELECT id, name, character_theme, color, points FROM flowers ORDER BY id ASC")
     
     return render_template('index.html',
@@ -65,8 +61,7 @@ def index():
                            flowers=flowers,
                            total_flowers=total_flowers,
                            total_claims=total_claims,
-                           total_squads=total_squads,
-                           recent_activity=recent_activity)
+                           total_squads=total_squads)
 
 @app.route('/leaderboard')
 def leaderboard():

@@ -224,30 +224,5 @@
         </div>
     </div>
 
-    <!-- Live Activity Log -->
-    <div class="bg-google-surface border border-google-border rounded-2xl p-6">
-        <h3 class="text-base font-bold text-white flex items-center gap-2 mb-4">
-            <span class="w-2 h-2 rounded-full bg-google-green animate-pulse"></span>
-            <span>Live Academy Grimoire Log</span>
-        </h3>
-
-        <div class="space-y-2.5">
-            {% for log in recent_activity %}
-            <div class="flex items-start gap-3 text-xs p-2.5 rounded-lg bg-slate-900/60 border border-slate-800/80">
-                <span class="font-mono text-slate-500 text-[11px] whitespace-nowrap">{{ log.created_at[11:19] if log.created_at else 'Just now' }}</span>
-                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono
-                    {% if log.event_type == 'CLAIM' %} bg-emerald-950 text-emerald-400 border border-emerald-800
-                    {% elif log.event_type == 'REGISTER' %} bg-sky-950 text-sky-400 border border-sky-800
-                    {% else %} bg-slate-800 text-slate-300 {% endif %}">
-                    {{ log.event_type }}
-                </span>
-                <span class="text-slate-300 leading-tight">{{ log.description }}</span>
-            </div>
-            {% else %}
-            <p class="text-xs text-slate-500 italic">No events recorded yet. Ready for the hunt!</p>
-            {% endfor %}
-        </div>
-    </div>
-
 </div>
 {% endblock %}
