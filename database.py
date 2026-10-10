@@ -250,6 +250,28 @@ def init_db(seed_sample_data=True):
     conn = get_db()
     cursor = conn.cursor()
 
+    cursor.execute('''
+        SELECT flower_id
+        FROM claims
+        GROUP BY flower_id
+        HAVING COUNT(*) > 1
+        LIMIT 1
+    ''')
+    duplicate_claim = cursor.fetchone()
+    if duplicate_claim:
+        conn.rollback()
+        cursor.close()
+        conn.close()
+        raise RuntimeError(
+            f"Flower #{duplicate_claim['flower_id']} is already claimed by multiple teams. "
+            "Resolve duplicate claims in Supabase before starting the app."
+        )
+
+    cursor.execute('''
+        CREATE UNIQUE INDEX IF NOT EXISTS claims_flower_id_unique
+        ON claims (flower_id)
+    ''')
+
     # Seed flowers if empty
     cursor.execute('SELECT COUNT(*) FROM flowers')
     if cursor.fetchone()['count'] == 0:

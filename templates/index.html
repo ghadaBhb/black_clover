@@ -211,13 +211,24 @@
                     <p class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
                         <span>🌸</span> {{ f.character_theme }}
                     </p>
+                    <p class="mt-3 text-xs font-semibold {% if f.is_claimed %}text-emerald-300{% else %}text-amber-300{% endif %}">
+                        {% if f.is_claimed %}
+                        ✓ Collected by {{ f.claimed_by_team }}{% if f.claimed_by %} · {{ f.claimed_by }}{% endif %}
+                        {% else %}
+                        Available
+                        {% endif %}
+                    </p>
                 </div>
 
                 <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
                     <span class="text-[11px] text-slate-500">Find in campus</span>
+                    {% if f.is_claimed %}
+                    <span class="text-xs font-semibold text-slate-500">Already collected</span>
+                    {% else %}
                     <button onclick="openClaimModalWithFlower('{{ f.id }}')" class="text-xs font-semibold text-google-blue hover:text-white transition">
-                        Claim &rarr;
+                        Enter code &rarr;
                     </button>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}

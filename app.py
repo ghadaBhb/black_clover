@@ -56,7 +56,17 @@ def index():
     total_claims = query_db("SELECT COUNT(*) as count FROM claims", one=True)['count']
     total_squads = len(squads)
     
-    flowers = query_db("SELECT id, name, character_theme, color, points FROM flowers ORDER BY id ASC")
+    flowers = query_db('''
+        SELECT f.id, f.name, f.character_theme, f.riddle, f.color, f.points,
+               c.squad_id IS NOT NULL AS is_claimed,
+               c.claimed_by,
+               c.claimed_at,
+               s.name AS claimed_by_team
+        FROM flowers f
+        LEFT JOIN claims c ON c.flower_id = f.id
+        LEFT JOIN squads s ON s.id = c.squad_id
+        ORDER BY f.id ASC
+    ''')
     
     return render_template('index.html',
                            squads=squads,
@@ -176,20 +186,24 @@ def squad_detail(squad_id):
     
     members = query_db("SELECT * FROM members WHERE squad_id = %s ORDER BY id ASC", (squad_id,))
     
-    # Get all flowers and whether this squad claimed them
+    # Show global collection status while keeping this team's score specific to its own claims.
     flowers = query_db('''
-        SELECT f.*, 
-               CASE WHEN c.id IS NOT NULL THEN 1 ELSE 0 END as is_claimed,
+        SELECT f.*,
+               c.squad_id IS NOT NULL AS is_claimed,
+               c.squad_id = %s AS is_claimed_by_team,
                c.claimed_at,
-               c.claimed_by
+               c.claimed_by,
+               s.name AS claimed_by_team
         FROM flowers f
-        LEFT JOIN claims c ON f.id = c.flower_id AND c.squad_id = %s
+        LEFT JOIN claims c ON f.id = c.flower_id
+        LEFT JOIN squads s ON s.id = c.squad_id
         ORDER BY f.id ASC
     ''', (squad_id,))
     
-    claimed_count = sum(1 for f in flowers if f['is_claimed'])
-    total_points = sum(f['points'] for f in flowers if f['is_claimed'])
+    claimed_count = sum(1 for f in flowers if f['is_claimed_by_team'])
+    total_points = sum(f['points'] for f in flowers if f['is_claimed_by_team'])
     total_flowers = len(flowers)
+    available_count = sum(1 for f in flowers if not f['is_claimed'])
     
     return render_template('grimoire.html',
                            squad=squad,
@@ -197,7 +211,8 @@ def squad_detail(squad_id):
                            flowers=flowers,
                            claimed_count=claimed_count,
                            total_points=total_points,
-                           total_flowers=total_flowers)
+                           total_flowers=total_flowers,
+                           available_count=available_count)
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
@@ -308,18 +323,38 @@ def api_claim():
         }), 400
 
     # Check if already claimed
-    already = query_db("SELECT id FROM claims WHERE squad_id = %s AND flower_id = %s", (squad_id, flower['id']), one=True)
+    already = query_db('''
+        SELECT c.id, s.name AS claimed_by_team
+        FROM claims c
+        JOIN squads s ON s.id = c.squad_id
+        WHERE c.flower_id = %s
+    ''', (flower['id'],), one=True)
     if already:
         return jsonify({
             "status": "error", 
-            "message": f"Your squad already unlocked Flower #{flower['id']} ({flower['name']})!"
+            "message": (
+                f"Flower #{flower['id']} ({flower['name']}) has already been collected "
+                f"by {already['claimed_by_team']}."
+            )
         }), 409
 
-    # Insert claim
-    modify_db(
-        "INSERT INTO claims (squad_id, flower_id, claimed_by) VALUES (%s, %s, %s)",
+    # The unique flower_id index makes the one-team-per-flower rule atomic across requests.
+    inserted_claim_id = modify_db(
+        "INSERT INTO claims (squad_id, flower_id, claimed_by) VALUES (%s, %s, %s) ON CONFLICT (flower_id) DO NOTHING RETURNING id",
         (squad_id, flower['id'], claimed_by)
     )
+    if inserted_claim_id is None:
+        claimant = query_db('''
+            SELECT s.name
+            FROM claims c
+            JOIN squads s ON s.id = c.squad_id
+            WHERE c.flower_id = %s
+        ''', (flower['id'],), one=True)
+        claimant_name = claimant['name'] if claimant else 'another team'
+        return jsonify({
+            "status": "error",
+            "message": f"This flower was just collected by {claimant_name}.",
+        }), 409
 
     log_activity(
         "CLAIM",
@@ -336,7 +371,7 @@ def api_claim():
 
     return jsonify({
         "status": "success",
-        "message": f"Mana Unlocked! You claimed Flower #{flower['id']}: {flower['name']}!",
+        "message": f"Flower #{flower['id']} collected: {flower['name']}!",
         "flower": {
             "id": flower['id'],
             "name": flower['name'],
@@ -370,7 +405,35 @@ def api_admin_toggle_claim():
         log_activity("ADMIN_REVOKE", f"Organizer revoked Flower #{flower_id} ({flower['name']}) from '{squad['name']}'")
         action = "revoked"
     else:
-        modify_db("INSERT INTO claims (squad_id, flower_id, claimed_by) VALUES (%s, %s, 'Organizer')", (squad_id, flower_id))
+        claimant = query_db('''
+            SELECT s.name
+            FROM claims c
+            JOIN squads s ON s.id = c.squad_id
+            WHERE c.flower_id = %s
+        ''', (flower_id,), one=True)
+        if claimant:
+            return jsonify({
+                "status": "error",
+                "message": f"This flower has already been collected by {claimant['name']}.",
+            }), 409
+        inserted_claim_id = modify_db('''
+            INSERT INTO claims (squad_id, flower_id, claimed_by)
+            VALUES (%s, %s, 'Organizer')
+            ON CONFLICT (flower_id) DO NOTHING
+            RETURNING id
+        ''', (squad_id, flower_id))
+        if inserted_claim_id is None:
+            claimant = query_db('''
+                SELECT s.name
+                FROM claims c
+                JOIN squads s ON s.id = c.squad_id
+                WHERE c.flower_id = %s
+            ''', (flower_id,), one=True)
+            claimant_name = claimant['name'] if claimant else 'another team'
+            return jsonify({
+                "status": "error",
+                "message": f"This flower was just collected by {claimant_name}.",
+            }), 409
         log_activity("ADMIN_GRANT", f"Organizer granted Flower #{flower_id} ({flower['name']}) to '{squad['name']}'")
         action = "granted"
 
