@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Register Squad | GDG x Black Clover Open Day{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+
+    <!-- Header -->
+    <div class="text-center space-y-2 mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs font-semibold text-amber-400">
+            <span>⚔️</span>
+            <span>Magic Knights Entrance Exam</span>
+        </div>
+        <h1 class="text-3xl font-black text-white font-anime tracking-wider">
+            REGISTER YOUR MAGIC SQUAD
+        </h1>
+        <p class="text-sm text-slate-400 max-w-lg mx-auto">
+            Assemble your team of fellow developers to hunt the 20 hidden mana flowers around the school!
+        </p>
+    </div>
+
+    <!-- Registration Card -->
+    <div class="bg-google-card border border-google-border rounded-2xl p-6 sm:p-8 shadow-2xl relative">
+        
+        <!-- Quick Preset Squad Buttons -->
+        <div class="mb-6 pb-6 border-b border-google-border">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                Quick Squad Theme Presets (Click to autofill)
+            </label>
+            <div class="flex flex-wrap gap-2">
+                <button type="button" onclick="setPresetSquad('Black Bulls Devs', 'google-yellow', 'Surpass your limits! Right here, right now!')" class="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-amber-300 hover:border-amber-400 transition">
+                    🐂 Black Bulls
+                </button>
+                <button type="button" onclick="setPresetSquad('Golden Dawn Knights', 'google-blue', 'The elite prodigies of cloud and algorithms.')" class="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-sky-300 hover:border-sky-400 transition">
+                    ✨ Golden Dawn
+                </button>
+                <button type="button" onclick="setPresetSquad('Crimson Lion Coders', 'google-red', 'Burning passion for innovation and open source!')" class="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-rose-300 hover:border-rose-400 transition">
+                    🦁 Crimson Lions
+                </button>
+                <button type="button" onclick="setPresetSquad('Blue Rose Hackers', 'google-blue', 'Grace, Briar Magic and unbreakable precision.')" class="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-blue-300 hover:border-blue-400 transition">
+                    🌹 Blue Rose
+                </button>
+                <button type="button" onclick="setPresetSquad('Green Mantis Scripters', 'google-green', 'Slicing through bugs with razor precision!')" class="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-emerald-300 hover:border-emerald-400 transition">
+                    🦗 Green Mantis
+                </button>
+            </div>
+        </div>
+
+        <form action="{{ url_for('register') }}" method="POST" class="space-y-6">
+
+            <!-- Squad Name -->
+            <div>
+                <label for="squad-name" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                    Squad Name <span class="text-google-red">*</span>
+                </label>
+                <input type="text" id="squad-name" name="name" required placeholder="e.g. Black Bulls Devs or Cyber Lotus" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-google-blue placeholder:text-slate-600">
+            </div>
+
+            <!-- Captain Name & Color -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="captain-name" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                        Squad Captain (Leader) <span class="text-google-red">*</span>
+                    </label>
+                    <input type="text" id="captain-name" name="captain" required placeholder="Full Name of Captain" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-google-blue placeholder:text-slate-600">
+                </div>
+
+                <div>
+                    <label for="squad-color" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                        Google Theme Color
+                    </label>
+                    <select id="squad-color" name="color" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-google-blue">
+                        <option value="google-blue">🔵 Google Blue (Water & Sky Magic)</option>
+                        <option value="google-red">🔴 Google Red (Flame & Passion Magic)</option>
+                        <option value="google-yellow">🟡 Google Yellow (Solar & Lightning Magic)</option>
+                        <option value="google-green">🟢 Google Green (Wind & Nature Magic)</option>
+                        <option value="black-bulls-gold">⚫ Black Bulls Charcoal (Anti-Magic)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Motto -->
+            <div>
+                <label for="squad-motto" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                    Squad Motto / Battle Cry
+                </label>
+                <input type="text" id="squad-motto" name="motto" placeholder="e.g. Surpass your limits! Right here, right now!" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-google-blue placeholder:text-slate-600">
+            </div>
+
+            <!-- Team Members Section -->
+            <div class="space-y-3 pt-2">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                            Squad Members (Magic Knights)
+                        </label>
+                        <p class="text-xs text-slate-500">Include all teammates participating with you.</p>
+                    </div>
+                    <button type="button" onclick="addMemberRow()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-google-blue flex items-center gap-1 transition">
+                        <span>+</span> Add Member
+                    </button>
+                </div>
+
+                <div id="members-container" class="space-y-2.5">
+                    <!-- Default Member Row 1 -->
+                    <div class="member-row flex items-center gap-2">
+                        <input type="text" name="members[]" placeholder="Teammate 2 Name" class="flex-grow bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-google-green">
+                        <select name="roles[]" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-300 focus:outline-none">
+                            <option value="Vice-Captain">Vice-Captain</option>
+                            <option value="Scout">Scout / Tracker</option>
+                            <option value="Mana Specialist">Mana Specialist</option>
+                            <option value="Grimoire Scribe">Grimoire Scribe</option>
+                        </select>
+                        <button type="button" onclick="removeMemberRow(this)" class="p-2 text-slate-500 hover:text-rose-400 text-xs font-bold">&times;</button>
+                    </div>
+
+                    <!-- Default Member Row 2 -->
+                    <div class="member-row flex items-center gap-2">
+                        <input type="text" name="members[]" placeholder="Teammate 3 Name" class="flex-grow bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-google-green">
+                        <select name="roles[]" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-300 focus:outline-none">
+                            <option value="Scout">Scout / Tracker</option>
+                            <option value="Vice-Captain">Vice-Captain</option>
+                            <option value="Mana Specialist">Mana Specialist</option>
+                            <option value="Grimoire Scribe">Grimoire Scribe</option>
+                        </select>
+                        <button type="button" onclick="removeMemberRow(this)" class="p-2 text-slate-500 hover:text-rose-400 text-xs font-bold">&times;</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="pt-4 border-t border-google-border">
+                <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-google-blue via-indigo-600 to-google-green text-white font-extrabold text-sm shadow-xl shadow-blue-500/20 hover:scale-[1.01] active:scale-[0.99] transition flex items-center justify-center gap-2">
+                    <span>✨</span>
+                    <span>Summon Squad & Receive Grimoire</span>
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+    function setPresetSquad(name, color, motto) {
+        document.getElementById('squad-name').value = name;
+        document.getElementById('squad-color').value = color;
+        document.getElementById('squad-motto').value = motto;
+    }
+
+    function addMemberRow() {
+        const container = document.getElementById('members-container');
+        const count = container.children.length + 2;
+        const div = document.createElement('div');
+        div.className = 'member-row flex items-center gap-2 animate-in fade-in duration-200';
+        div.innerHTML = `
+            <input type="text" name="members[]" placeholder="Teammate ${count} Name" class="flex-grow bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-google-green">
+            <select name="roles[]" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-300 focus:outline-none">
+                <option value="Magic Knight">Magic Knight</option>
+                <option value="Scout">Scout / Tracker</option>
+                <option value="Mana Specialist">Mana Specialist</option>
+                <option value="Grimoire Scribe">Grimoire Scribe</option>
+            </select>
+            <button type="button" onclick="removeMemberRow(this)" class="p-2 text-slate-500 hover:text-rose-400 text-xs font-bold">&times;</button>
+        `;
+        container.appendChild(div);
+    }
+
+    function removeMemberRow(btn) {
+        btn.closest('.member-row').remove();
+    }
+</script>
+{% endblock %}

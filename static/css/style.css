@@ -1,0 +1,58 @@
+/* Custom styles for GDG x Black Clover */
+
+:root {
+    --google-blue: #4285F4;
+    --google-red: #EA4335;
+    --google-yellow: #FBBC05;
+    --google-green: #34A853;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #12141C;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #2E3547;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #4285F4;
+}
+
+/* Mana Glow Animations */
+@keyframes mana-pulse {
+    0%, 100% {
+        box-shadow: 0 0 15px rgba(66, 133, 244, 0.4), inset 0 0 15px rgba(52, 168, 83, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 25px rgba(234, 67, 53, 0.5), inset 0 0 20px rgba(251, 188, 5, 0.3);
+    }
+}
+
+.mana-glow {
+    animation: mana-pulse 3s infinite ease-in-out;
+}
+
+/* GDG Bracket Logo */
+.gdg-bracket-blue { color: var(--google-blue); }
+.gdg-bracket-red { color: var(--google-red); }
+.gdg-bracket-yellow { color: var(--google-yellow); }
+.gdg-bracket-green { color: var(--google-green); }
+
+/* Clover Card Gradient Shimmer */
+.grimoire-card {
+    background: linear-gradient(135deg, #1A1D27 0%, #222634 100%);
+    transition: all 0.25s ease;
+}
+
+.grimoire-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.5);
+}

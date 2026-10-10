@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}Organizer Admin Portal | GDG x Black Clover{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    {% if not is_authenticated %}
+    <!-- Admin Login Screen -->
+    <div class="max-w-md mx-auto my-12 bg-google-card border border-google-border rounded-2xl p-8 shadow-2xl text-center space-y-6">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-600 flex items-center justify-center text-3xl shadow-lg">
+            👑
+        </div>
+
+        <div>
+            <h2 class="text-2xl font-black text-white font-anime tracking-wide">ORGANIZER PORTAL</h2>
+            <p class="text-xs text-slate-400 mt-1">Authorized GDG Leads & Game Masters Only</p>
+        </div>
+
+        <form action="{{ url_for('admin') }}" method="POST" class="space-y-4">
+            <input type="hidden" name="action" value="login">
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 text-left">Organizer PIN</label>
+                <input type="password" name="pin" required placeholder="Enter PIN (Default: 10GDG-open10DAY26)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-center text-lg font-mono text-white tracking-widest focus:outline-none focus:border-google-blue">
+            </div>
+
+            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-google-blue to-google-green text-white font-extrabold text-sm hover:brightness-110 active:scale-95 transition">
+                Enter Parliament
+            </button>
+        </form>
+
+        <p class="text-[11px] text-slate-500">Default PIN is <code class="text-amber-400 bg-slate-900 px-1.5 py-0.5 rounded">10GDG-open10DAY26</code></p>
+    </div>
+
+    {% else %}
+    <!-- Admin Dashboard -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-google-border pb-6">
+        <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-950/60 border border-amber-800 text-xs font-semibold text-amber-400">
+                <span>⚡</span>
+                <span>Grand Magic Parliament</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-black text-white font-anime tracking-wide mt-1">
+                ORGANIZER CONTROL PANEL
+            </h1>
+            <p class="text-xs text-slate-400">Manage squads, manually toggle flowers, edit riddles, and export results.</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+            <a href="{{ url_for('export_csv') }}" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow">
+                <span>📥</span> Export CSV
+            </a>
+            <form action="{{ url_for('api_admin_reset_claims') }}" method="POST" onsubmit="return confirm('⚠️ Warning: Are you sure you want to reset all claims back to 0 for all teams?');" class="inline">
+                <button type="submit" class="px-3.5 py-2 rounded-xl bg-rose-950/80 hover:bg-rose-900 border border-rose-800 text-rose-300 text-xs font-bold transition flex items-center gap-1.5 shadow">
+                    <span>🔄</span> Reset Claims
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Quick 1-Tap Claim Matrix -->
+    <div class="bg-google-card border border-google-border rounded-2xl p-6 shadow-xl space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    <span>⚡</span> 1-Tap Flower Matrix (Instant Toggle)
+                </h2>
+                <p class="text-xs text-slate-400">Click any box to immediately grant or revoke a flower for that squad!</p>
+            </div>
+            <span class="text-xs text-emerald-400 font-mono font-semibold">Green = Claimed • Gray = Locked</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                    <tr class="bg-slate-900/90 text-slate-400 border-b border-slate-800">
+                        <th class="py-3 px-3 font-bold sticky left-0 bg-slate-900 z-10 min-w-[160px]">Squad</th>
+                        <th class="py-3 px-2 text-center font-bold">Total</th>
+                        {% for f in flowers %}
+                        <th class="py-3 px-1 text-center font-mono w-8 hover:text-white" title="#{{ f.id }}: {{ f.name }}">
+                            {{ f.id }}
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60 font-mono">
+                    {% for sq in squads %}
+                    <tr class="hover:bg-slate-800/30">
+                        <!-- Squad Name (Sticky) -->
+                        <td class="py-3 px-3 font-sans font-bold text-white sticky left-0 bg-google-card z-10 whitespace-nowrap">
+                            <span class="truncate max-w-[140px] inline-block">{{ sq.name }}</span>
+                        </td>
+
+                        <!-- Total Flowers -->
+                        <td class="py-3 px-2 text-center font-bold text-amber-400">
+                            <span id="sq-total-{{ sq.id }}">{{ sq.flowers_count }}</span>/{{ flowers|length }}
+                        </td>
+
+                        <!-- 20 Flower Matrix Toggles -->
+                        {% for f in flowers %}
+                        {% set is_claimed = (sq.id, f.id) in claim_matrix %}
+                        <td class="py-2 px-1 text-center">
+                            <button onclick="toggleMatrixClaim({{ sq.id }}, {{ f.id }}, this)"
+                                    title="Toggle #{{ f.id }} for {{ sq.name }}"
+                                    class="w-6 h-6 rounded flex items-center justify-center font-bold text-[10px] transition
+                                    {% if is_claimed %} bg-emerald-500 text-slate-950 font-black shadow-sm shadow-emerald-500/50
+                                    {% else %} bg-slate-800/80 text-slate-500 hover:bg-slate-700 hover:text-slate-200 {% endif %}">
+                                {% if is_claimed %}✓{% else %}·{% endif %}
+                            </button>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Edit Flowers & Riddles -->
+    <div class="bg-google-card border border-google-border rounded-2xl p-6 shadow-xl space-y-4">
+        <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                <span>📝</span> School Flower Locations & Riddles Customization
+            </h2>
+            <p class="text-xs text-slate-400">Customize the riddles or passcodes to match your actual school building layout!</p>
+        </div>
+
+        <form action="{{ url_for('api_admin_add_flower') }}" method="POST" class="p-4 rounded-xl bg-slate-900/60 border border-emerald-800 space-y-3">
+            <h3 class="text-sm font-bold text-white">Add a Flower</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Flower Name</label>
+                    <input type="text" name="name" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Anime Theme</label>
+                    <input type="text" name="character_theme" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-300">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Passcode</label>
+                    <input type="text" name="passcode" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-amber-300 font-mono uppercase">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Points</label>
+                    <input type="number" name="points" min="0" value="100" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-amber-400 font-mono">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">School Location</label>
+                    <input type="text" name="location_hint" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-300">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Grimoire Riddle</label>
+                    <textarea name="riddle" rows="2" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-300"></textarea>
+                </div>
+            </div>
+            <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">Add Flower</button>
+        </form>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for f in flowers %}
+            <form action="{{ url_for('api_admin_edit_flower') }}" method="POST" class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
+                <input type="hidden" name="flower_id" value="{{ f.id }}">
+                
+                <div class="flex items-center justify-between">
+                    <span class="font-mono font-bold text-xs px-2 py-0.5 rounded bg-slate-800 text-amber-300">
+                        Flower #{{ f.id }}
+                    </span>
+                    <div class="flex items-center gap-2">
+                        <label class="text-[10px] uppercase font-bold text-slate-400">Points:</label>
+                        <input type="number" name="points" value="{{ f.points }}" class="w-16 bg-slate-950 border border-slate-700 rounded px-2 py-0.5 text-xs text-right text-amber-400 font-mono">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Flower Name</label>
+                    <input type="text" name="name" value="{{ f.name }}" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Anime Theme</label>
+                        <input type="text" name="character_theme" value="{{ f.character_theme }}" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-300">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Passcode</label>
+                        <input type="text" name="passcode" value="{{ f.passcode }}" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-amber-300 font-mono uppercase">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">School Location (Internal)</label>
+                    <input type="text" name="location_hint" value="{{ f.location_hint }}" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-300">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Grimoire Riddle (Shown to Players)</label>
+                    <textarea name="riddle" rows="2" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-300">{{ f.riddle }}</textarea>
+                </div>
+
+                <div class="text-right">
+                    <button type="submit" class="px-3 py-1 rounded-lg bg-google-blue hover:bg-blue-600 text-white text-xs font-bold transition">
+                        Save Flower #{{ f.id }}
+                    </button>
+                </div>
+            </form>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Squad Management & Deletion -->
+    <div class="bg-google-card border border-google-border rounded-2xl p-6 shadow-xl space-y-4">
+        <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                <span>🛡️</span> Manage Squads
+            </h2>
+            <p class="text-xs text-slate-400">View or delete registered teams if entered incorrectly.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {% for sq in squads %}
+            <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                <div>
+                    <div class="font-bold text-white text-sm">{{ sq.name }}</div>
+                    <div class="text-xs text-slate-400">Captain: {{ sq.captain }}</div>
+                    <div class="text-[11px] text-amber-400 font-mono mt-0.5">{{ sq.flowers_count }} flowers • {{ sq.total_points }} MP</div>
+                </div>
+
+                <form action="{{ url_for('api_admin_delete_squad') }}" method="POST" onsubmit="return confirm('Delete squad {{ sq.name }}?');">
+                    <input type="hidden" name="squad_id" value="{{ sq.id }}">
+                    <button type="submit" class="p-2 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 text-xs font-bold transition" title="Delete Squad">
+                        🗑️
+                    </button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Activity Audit Trail -->
+    <div class="bg-google-surface border border-google-border rounded-2xl p-6 shadow-xl space-y-4">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <span>📜</span> Academy Audit Trail
+        </h2>
+
+        <div class="max-h-64 overflow-y-auto space-y-2 pr-2">
+            {% for log in logs %}
+            <div class="flex items-start gap-3 text-xs p-2.5 rounded-lg bg-slate-900/60 border border-slate-800">
+                <span class="font-mono text-slate-500 text-[11px]">{{ log.created_at }}</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-slate-800 text-slate-300">{{ log.event_type }}</span>
+                <span class="text-slate-300">{{ log.description }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% endif %}
+
+</div>
+
+<script>
+    function toggleMatrixClaim(squadId, flowerId, btn) {
+        fetch('/api/admin/toggle-claim', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ squad_id: squadId, flower_id: flowerId })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const totalEl = document.getElementById(`sq-total-${squadId}`);
+                let curr = parseInt(totalEl.innerText) || 0;
+
+                if (data.action === 'granted') {
+                    btn.className = 'w-6 h-6 rounded flex items-center justify-center font-bold text-[10px] transition bg-emerald-500 text-slate-950 font-black shadow-sm shadow-emerald-500/50';
+                    btn.innerText = '✓';
+                    totalEl.innerText = curr + 1;
+                    playSuccessSound();
+                } else {
+                    btn.className = 'w-6 h-6 rounded flex items-center justify-center font-bold text-[10px] transition bg-slate-800/80 text-slate-500 hover:bg-slate-700 hover:text-slate-200';
+                    btn.innerText = '·';
+                    totalEl.innerText = Math.max(0, curr - 1);
+                }
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(err => {
+            alert('Failed to toggle claim');
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}Wizard King Leaderboard | GDG x Black Clover{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Projector Mode Styling */
+    body.projector-mode {
+        background-color: #0b0d14 !important;
+        overflow-y: auto;
+    }
+    body.projector-mode nav,
+    body.projector-mode footer,
+    body.projector-mode .non-projector {
+        display: none !important;
+    }
+    body.projector-mode .projector-container {
+        max-width: 100% !important;
+        padding: 2rem !important;
+    }
+    body.projector-mode .rank-row {
+        padding: 1.5rem !important;
+        font-size: 1.25rem !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="projector-container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Header & Controls -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-google-border pb-6">
+        <div>
+            <div class="flex items-center gap-3">
+                <span class="text-3xl">👑</span>
+                <div>
+                    <h1 class="text-2xl sm:text-4xl font-black text-white font-anime tracking-wide flex items-center gap-2">
+                        WIZARD KING STANDINGS
+                    </h1>
+                    <p class="text-xs sm:text-sm text-slate-400 mt-1">
+                        Live rankings of Magic Knight Squads hunting the 20 Mana Flowers.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+            <!-- Auto-Refresh Live Indicator -->
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300">
+                <span class="w-2.5 h-2.5 rounded-full bg-google-green animate-ping"></span>
+                <span>Live Sync (4s)</span>
+            </div>
+
+            <!-- Projector Mode Toggle -->
+            <button id="projector-btn" onclick="toggleProjectorMode()" class="px-3.5 py-1.5 rounded-lg bg-indigo-950 hover:bg-indigo-900 border border-indigo-700/50 text-indigo-300 font-bold text-xs transition flex items-center gap-1.5 shadow">
+                <span>📽️</span>
+                <span>Projector Mode</span>
+            </button>
+
+            <!-- Quick Claim -->
+            <button onclick="openClaimModal()" class="px-4 py-1.5 rounded-lg bg-google-blue hover:bg-blue-600 text-white font-bold text-xs transition flex items-center gap-1.5 shadow">
+                <span>⚡</span>
+                <span>Claim Flower</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Exit Projector Mode Button (Only visible in projector mode) -->
+    <div id="exit-projector-bar" class="hidden fixed top-4 right-4 z-50">
+        <button onclick="toggleProjectorMode()" class="px-4 py-2 rounded-xl bg-slate-800/90 text-white border border-slate-600 text-xs font-bold shadow-2xl hover:bg-slate-700">
+            ✕ Exit Projector Mode (ESC)
+        </button>
+    </div>
+
+    <!-- Top 3 Animated Cards (Large View) -->
+    <div id="top-podium" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% if squads|length >= 1 %}
+            <!-- 1st Place Wizard King -->
+            {% set first = squads[0] %}
+            <div class="md:order-2 relative bg-gradient-to-b from-amber-950/40 via-google-card to-slate-900 border-2 border-amber-400 rounded-2xl p-6 shadow-2xl shadow-amber-500/20 transform md:-translate-y-2">
+                <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-amber-400 text-slate-950 text-xs font-black font-anime uppercase tracking-widest shadow-md">
+                    👑 CURRENT WIZARD KING
+                </div>
+
+                <div class="text-center mt-2">
+                    <div class="w-16 h-16 mx-auto rounded-full bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-3xl shadow-inner">
+                        🥇
+                    </div>
+                    <h3 class="text-2xl font-black text-white mt-3 font-anime">{{ first.name }}</h3>
+                    <p class="text-xs text-amber-300 font-medium">Captain: {{ first.captain }}</p>
+                    
+                    <div class="mt-4 bg-slate-950/60 rounded-xl p-3 border border-slate-800">
+                        <div class="text-3xl font-black text-amber-400 font-mono">{{ first.flowers_count }} <span class="text-sm font-sans text-slate-400">/ {{ total_flowers }} Flowers</span></div>
+                        <div class="text-sm font-bold text-slate-300 font-mono mt-1">{{ first.total_points }} Mana Points</div>
+                    </div>
+
+                    <a href="{{ url_for('squad_detail', squad_id=first.id) }}" class="mt-4 inline-block text-xs font-bold text-google-blue hover:text-white transition">
+                        Inspect Grimoire &rarr;
+                    </a>
+                </div>
+            </div>
+
+            <!-- 2nd Place -->
+            {% if squads|length >= 2 %}
+            {% set second = squads[1] %}
+            <div class="md:order-1 relative bg-google-card border border-slate-400/60 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+                <div class="text-center">
+                    <div class="w-12 h-12 mx-auto rounded-full bg-slate-400/20 border border-slate-300 flex items-center justify-center text-2xl">
+                        🥈
+                    </div>
+                    <div class="text-xs font-black text-slate-400 uppercase tracking-widest mt-1">2ND RANK</div>
+                    <h3 class="text-xl font-bold text-white mt-1">{{ second.name }}</h3>
+                    <p class="text-xs text-slate-400">Captain: {{ second.captain }}</p>
+
+                    <div class="mt-4 bg-slate-950/60 rounded-xl p-3 border border-slate-800">
+                        <div class="text-2xl font-bold text-white font-mono">{{ second.flowers_count }} <span class="text-xs font-sans text-slate-400">/ {{ total_flowers }} Flowers</span></div>
+                        <div class="text-xs font-bold text-slate-400 font-mono mt-1">{{ second.total_points }} MP</div>
+                    </div>
+                </div>
+                <a href="{{ url_for('squad_detail', squad_id=second.id) }}" class="mt-4 text-center text-xs font-bold text-google-blue hover:text-white transition">
+                    Inspect Grimoire &rarr;
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- 3rd Place -->
+            {% if squads|length >= 3 %}
+            {% set third = squads[2] %}
+            <div class="md:order-3 relative bg-google-card border border-amber-800/60 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+                <div class="text-center">
+                    <div class="w-12 h-12 mx-auto rounded-full bg-amber-800/20 border border-amber-700 flex items-center justify-center text-2xl">
+                        🥉
+                    </div>
+                    <div class="text-xs font-black text-amber-600 uppercase tracking-widest mt-1">3RD RANK</div>
+                    <h3 class="text-xl font-bold text-white mt-1">{{ third.name }}</h3>
+                    <p class="text-xs text-slate-400">Captain: {{ third.captain }}</p>
+
+                    <div class="mt-4 bg-slate-950/60 rounded-xl p-3 border border-slate-800">
+                        <div class="text-2xl font-bold text-white font-mono">{{ third.flowers_count }} <span class="text-xs font-sans text-slate-400">/ {{ total_flowers }} Flowers</span></div>
+                        <div class="text-xs font-bold text-slate-400 font-mono mt-1">{{ third.total_points }} MP</div>
+                    </div>
+                </div>
+                <a href="{{ url_for('squad_detail', squad_id=third.id) }}" class="mt-4 text-center text-xs font-bold text-google-blue hover:text-white transition">
+                    Inspect Grimoire &rarr;
+                </a>
+            </div>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <!-- Complete Squad Table / Roster -->
+    <div class="bg-google-surface border border-google-border rounded-2xl overflow-hidden shadow-xl">
+        <div class="px-6 py-4 border-b border-google-border flex items-center justify-between">
+            <h2 class="text-sm sm:text-base font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <span>📊</span> All Magic Knight Squads
+            </h2>
+            <span class="text-xs text-slate-400">{{ squads|length }} Squads Competing</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-900/80 text-[11px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-800">
+                        <th class="py-3.5 px-4 text-center w-16">Rank</th>
+                        <th class="py-3.5 px-4">Squad Name</th>
+                        <th class="py-3.5 px-4">Captain</th>
+                        <th class="py-3.5 px-4 text-center">Flowers Found</th>
+                        <th class="py-3.5 px-4 text-right">Mana Points (MP)</th>
+                        <th class="py-3.5 px-4 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-tbody" class="divide-y divide-slate-800/60 text-sm">
+                    {% for sq in squads %}
+                    <tr class="rank-row hover:bg-slate-800/40 transition {% if loop.index == 1 %}bg-amber-950/10{% endif %}">
+                        <!-- Rank -->
+                        <td class="py-4 px-4 text-center">
+                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full font-mono font-bold text-xs
+                                {% if loop.index == 1 %} bg-amber-400 text-slate-950 shadow-md shadow-amber-400/30
+                                {% elif loop.index == 2 %} bg-slate-300 text-slate-950
+                                {% elif loop.index == 3 %} bg-amber-700 text-white
+                                {% else %} bg-slate-800 text-slate-300 {% endif %}">
+                                {{ loop.index }}
+                            </span>
+                        </td>
+
+                        <!-- Squad Name & Motto -->
+                        <td class="py-4 px-4">
+                            <div class="font-bold text-white flex items-center gap-2">
+                                <span>{{ sq.name }}</span>
+                                {% if loop.index == 1 %}
+                                <span class="text-xs text-amber-400">👑</span>
+                                {% endif %}
+                            </div>
+                            {% if sq.motto %}
+                            <div class="text-[11px] text-slate-400 italic line-clamp-1">"{{ sq.motto }}"</div>
+                            {% endif %}
+                        </td>
+
+                        <!-- Captain -->
+                        <td class="py-4 px-4 text-slate-300 text-xs font-medium">
+                            {{ sq.captain }}
+                        </td>
+
+                        <!-- Flower Count & Progress Bar -->
+                        <td class="py-4 px-4">
+                            <div class="flex items-center justify-center gap-2">
+                                <span class="font-mono font-bold text-white text-sm">{{ sq.flowers_count }}</span>
+                                <span class="text-xs text-slate-500">/ {{ total_flowers }}</span>
+                            </div>
+                            <div class="w-24 mx-auto bg-slate-800 rounded-full h-1.5 mt-1 overflow-hidden">
+                                <div class="bg-gradient-to-r from-google-blue to-google-green h-full rounded-full"
+                                     style="width: {{ (sq.flowers_count / total_flowers * 100)|round }}%"></div>
+                            </div>
+                        </td>
+
+                        <!-- Mana Points -->
+                        <td class="py-4 px-4 text-right">
+                            <span class="font-mono font-extrabold text-amber-400 text-base">
+                                {{ sq.total_points }}
+                            </span>
+                            <span class="text-xs text-slate-500 font-mono">MP</span>
+                        </td>
+
+                        <!-- Link to Grimoire -->
+                        <td class="py-4 px-4 text-right">
+                            <a href="{{ url_for('squad_detail', squad_id=sq.id) }}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold transition">
+                                <span>📖</span>
+                                <span>Grimoire</span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-slate-500 italic">
+                            No squads registered yet! Be the first to register.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/leaderboard.js') }}"></script>
+{% endblock %}

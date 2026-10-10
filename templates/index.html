@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}GDG x Black Clover: The 20 Mana Flowers Hunt | Open Day{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+
+    <!-- Hero Section -->
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-google-surface to-slate-950 border border-google-border p-6 sm:p-10 shadow-2xl">
+        <!-- Background Glowing Circles with Google Colors -->
+        <div class="absolute -top-24 -left-24 w-72 h-72 bg-google-blue/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute top-1/2 right-0 w-80 h-80 bg-google-red/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 left-1/3 w-72 h-72 bg-google-green/15 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
+            <div class="space-y-4 max-w-2xl text-center lg:text-left">
+                <!-- Badge -->
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-xs font-semibold">
+                    <span class="w-2 h-2 rounded-full bg-google-green animate-ping"></span>
+                    <span class="text-slate-300">Google Developer Groups • Open Day Special Event</span>
+                </div>
+
+                <!-- Main Heading -->
+                <h1 class="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
+                    <span class="text-white">THE MAGIC KNIGHTS</span><br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-google-blue via-google-red to-google-yellow font-anime tracking-wider">
+                        20 MANA FLOWERS HUNT
+                    </span>
+                </h1>
+
+                <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+                    20 enchanted <span class="text-google-yellow font-bold">Black Clover flowers</span> have been hidden across the school campus! Assemble your Squad, decipher the ancient riddles inside your Grimoire, and collect the Rune Passcodes to claim the title of <span class="text-amber-400 font-bold font-anime">Wizard King</span>!
+                </p>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
+                    <button onclick="openClaimModal()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-google-blue via-indigo-600 to-google-green text-white font-extrabold text-sm shadow-xl shadow-blue-500/25 hover:scale-105 active:scale-95 transition flex items-center gap-2">
+                        <span>⚡</span>
+                        <span>Claim Found Flower</span>
+                    </button>
+                    <a href="{{ url_for('register') }}" class="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold text-sm transition flex items-center gap-2">
+                        <span>⚔️</span>
+                        <span>Register Your Squad</span>
+                    </a>
+                    <a href="{{ url_for('leaderboard') }}" class="px-5 py-3 rounded-xl bg-google-yellow/10 hover:bg-google-yellow/20 border border-google-yellow/30 text-amber-300 font-bold text-sm transition flex items-center gap-2">
+                        <span>🏆</span>
+                        <span>Live Standings</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Grimoire / Clover Emblem Graphic -->
+            <div class="relative flex flex-col items-center justify-center p-6 bg-slate-900/60 border border-slate-800 rounded-2xl backdrop-blur-sm shadow-inner min-w-[280px]">
+                <div class="w-32 h-32 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-950 border-2 border-amber-500/50 flex flex-col items-center justify-center shadow-2xl relative group transform hover:rotate-2 transition">
+                    <div class="text-4xl animate-bounce">🍀</div>
+                    <div class="text-xs font-anime font-black text-amber-400 mt-1">5-LEAF GRIMOIRE</div>
+                    <div class="absolute -bottom-2 px-2 py-0.5 rounded bg-google-red text-[10px] font-black text-white uppercase tracking-wider">
+                        GDG EDITION
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <div class="text-xs font-mono text-slate-400">Total Mana Pool</div>
+                    <div class="text-2xl font-black text-white font-mono">2,280 <span class="text-xs text-google-yellow">MP</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Event Stats Strip -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-google-card border border-google-border p-4 rounded-xl flex items-center gap-3">
+            <div class="w-12 h-12 rounded-lg bg-google-blue/20 text-google-blue flex items-center justify-center text-2xl font-black">
+                🌸
+            </div>
+            <div>
+                <div class="text-2xl font-black text-white font-mono">{{ total_flowers }}</div>
+                <div class="text-xs text-slate-400 font-medium">Hidden Flowers</div>
+            </div>
+        </div>
+
+        <div class="bg-google-card border border-google-border p-4 rounded-xl flex items-center gap-3">
+            <div class="w-12 h-12 rounded-lg bg-google-red/20 text-google-red flex items-center justify-center text-2xl font-black">
+                🛡️
+            </div>
+            <div>
+                <div class="text-2xl font-black text-white font-mono">{{ total_squads }}</div>
+                <div class="text-xs text-slate-400 font-medium">Magic Squads</div>
+            </div>
+        </div>
+
+        <div class="bg-google-card border border-google-border p-4 rounded-xl flex items-center gap-3">
+            <div class="w-12 h-12 rounded-lg bg-google-green/20 text-google-green flex items-center justify-center text-2xl font-black">
+                ✨
+            </div>
+            <div>
+                <div class="text-2xl font-black text-white font-mono">{{ total_claims }}</div>
+                <div class="text-xs text-slate-400 font-medium">Total Finds</div>
+            </div>
+        </div>
+
+        <div class="bg-google-card border border-google-border p-4 rounded-xl flex items-center gap-3">
+            <div class="w-12 h-12 rounded-lg bg-google-yellow/20 text-google-yellow flex items-center justify-center text-2xl font-black">
+                👑
+            </div>
+            <div>
+                <div class="text-sm font-black text-amber-300 font-anime truncate">
+                    {% if squads and squads[0].flowers_count > 0 %}
+                        {{ squads[0].name }}
+                    {% else %}
+                        No Leader Yet
+                    {% endif %}
+                </div>
+                <div class="text-xs text-slate-400 font-medium">Current 1st Rank</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top 3 Squads Podium (If squads exist) -->
+    {% if squads|length >= 1 %}
+    <div class="space-y-4">
+        <div class="flex items-center justify-between">
+            <h2 class="text-xl font-black text-white flex items-center gap-2">
+                <span>👑</span>
+                <span>The Wizard King Podium</span>
+            </h2>
+            <a href="{{ url_for('leaderboard') }}" class="text-xs font-bold text-google-blue hover:text-white transition flex items-center gap-1">
+                <span>View Full Leaderboard</span> &rarr;
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% for sq in squads[:3] %}
+            <div class="relative bg-google-card border rounded-2xl p-5 overflow-hidden transition hover:-translate-y-1
+                {% if loop.index == 1 %} border-amber-500/60 shadow-lg shadow-amber-500/10 bg-gradient-to-b from-amber-950/20 to-google-card
+                {% elif loop.index == 2 %} border-slate-400/40
+                {% else %} border-amber-700/40 {% endif %}">
+                
+                <!-- Rank Medal Ribbon -->
+                <div class="flex items-center justify-between mb-3">
+                    <span class="px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider
+                        {% if loop.index == 1 %} bg-amber-500 text-slate-950
+                        {% elif loop.index == 2 %} bg-slate-300 text-slate-950
+                        {% else %} bg-amber-700 text-white {% endif %}">
+                        {% if loop.index == 1 %}🥇 1st • Wizard King{% elif loop.index == 2 %}🥈 2nd Rank{% else %}🥉 3rd Rank{% endif %}
+                    </span>
+                    <span class="font-mono text-sm font-bold text-amber-400">{{ sq.total_points }} MP</span>
+                </div>
+
+                <h3 class="text-lg font-bold text-white tracking-tight truncate">{{ sq.name }}</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Captain: <span class="text-slate-200 font-semibold">{{ sq.captain }}</span></p>
+
+                <!-- Flower Progress -->
+                <div class="mt-4 space-y-1.5">
+                    <div class="flex justify-between text-xs font-medium">
+                        <span class="text-slate-400">Flowers Found</span>
+                        <span class="text-white font-bold font-mono">{{ sq.flowers_count }} / {{ total_flowers }}</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                        <div class="bg-gradient-to-r from-google-blue to-google-green h-full rounded-full transition-all duration-500"
+                             style="width: {{ (sq.flowers_count / total_flowers * 100)|round }}%"></div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
+                    <span class="text-slate-500 italic truncate max-w-[180px]">"{{ sq.motto or 'Surpass your limits!' }}"</span>
+                    <a href="{{ url_for('squad_detail', squad_id=sq.id) }}" class="text-google-blue hover:text-white font-bold">
+                        Grimoire &rarr;
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 20 Flowers Catalog & Riddles Teaser -->
+    <div class="space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+                <h2 class="text-xl font-black text-white flex items-center gap-2">
+                    <span>🌸</span>
+                    <span>The 20 Hidden Mana Flowers</span>
+                </h2>
+                <p class="text-xs text-slate-400">Search the school grounds for these flowers. Each is tagged with a Rune Code!</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="openClaimModal()" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-google-blue hover:bg-blue-600 text-white flex items-center gap-1.5 transition">
+                    <span>⚡</span> Enter Code
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {% for f in flowers %}
+            <div class="bg-google-card border border-google-border rounded-xl p-4 flex flex-col justify-between hover:border-slate-500 transition group">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="w-7 h-7 rounded-lg flex items-center justify-center font-mono font-bold text-xs"
+                              style="background-color: {{ f.color }}22; color: {{ f.color }}; border: 1px solid {{ f.color }}55;">
+                            #{{ f.id }}
+                        </span>
+                        <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-amber-300">
+                            {{ f.points }} MP
+                        </span>
+                    </div>
+
+                    <h4 class="font-bold text-sm text-white group-hover:text-amber-300 transition line-clamp-1">
+                        {{ f.name }}
+                    </h4>
+                    <p class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
+                        <span>🛡️</span> {{ f.character_theme }}
+                    </p>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+                    <span class="text-[11px] text-slate-500">Find in campus</span>
+                    <button onclick="openClaimModalWithFlower('{{ f.id }}')" class="text-xs font-semibold text-google-blue hover:text-white transition">
+                        Claim &rarr;
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Live Activity Log -->
+    <div class="bg-google-surface border border-google-border rounded-2xl p-6">
+        <h3 class="text-base font-bold text-white flex items-center gap-2 mb-4">
+            <span class="w-2 h-2 rounded-full bg-google-green animate-pulse"></span>
+            <span>Live Academy Grimoire Log</span>
+        </h3>
+
+        <div class="space-y-2.5">
+            {% for log in recent_activity %}
+            <div class="flex items-start gap-3 text-xs p-2.5 rounded-lg bg-slate-900/60 border border-slate-800/80">
+                <span class="font-mono text-slate-500 text-[11px] whitespace-nowrap">{{ log.created_at[11:19] if log.created_at else 'Just now' }}</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono
+                    {% if log.event_type == 'CLAIM' %} bg-emerald-950 text-emerald-400 border border-emerald-800
+                    {% elif log.event_type == 'REGISTER' %} bg-sky-950 text-sky-400 border border-sky-800
+                    {% else %} bg-slate-800 text-slate-300 {% endif %}">
+                    {{ log.event_type }}
+                </span>
+                <span class="text-slate-300 leading-tight">{{ log.description }}</span>
+            </div>
+            {% else %}
+            <p class="text-xs text-slate-500 italic">No events recorded yet. Ready for the hunt!</p>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

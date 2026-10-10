@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Magic Knight Squads | GDG x Black Clover{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-google-border pb-6">
+        <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs font-semibold text-google-yellow">
+                <span>🛡️</span>
+                <span>Active Battalions</span>
+            </div>
+            <h1 class="text-3xl font-black text-white font-anime tracking-wide mt-1">
+                ALL MAGIC SQUADS & GRIMOIRES
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-400">
+                Click any Squad to open their Grimoire, see unlocked flowers, and track their progress!
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('register') }}" class="px-4 py-2 rounded-xl bg-google-blue hover:bg-blue-600 text-white font-bold text-xs transition flex items-center gap-1.5 shadow">
+                <span>⚔️</span> Register New Squad
+            </a>
+            <button onclick="openClaimModal()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-google-blue to-google-green text-white font-bold text-xs transition flex items-center gap-1.5 shadow">
+                <span>⚡</span> Claim Flower
+            </button>
+        </div>
+    </div>
+
+    <!-- Squads Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for sq in squads %}
+        <div class="bg-google-card border border-google-border rounded-2xl p-6 flex flex-col justify-between hover:border-slate-500 transition group relative overflow-hidden">
+            <!-- Ambient Squad Glow -->
+            <div class="absolute -right-8 -top-8 w-24 h-24 rounded-full blur-2xl opacity-20 pointer-events-none
+                {% if sq.color == 'google-red' %} bg-google-red
+                {% elif sq.color == 'google-yellow' %} bg-google-yellow
+                {% elif sq.color == 'google-green' %} bg-google-green
+                {% else %} bg-google-blue {% endif %}">
+            </div>
+
+            <div>
+                <!-- Top Row -->
+                <div class="flex items-center justify-between mb-3">
+                    <span class="px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider
+                        {% if sq.color == 'google-red' %} bg-rose-950 text-rose-300 border border-rose-800
+                        {% elif sq.color == 'google-yellow' %} bg-amber-950 text-amber-300 border border-amber-800
+                        {% elif sq.color == 'google-green' %} bg-emerald-950 text-emerald-300 border border-emerald-800
+                        {% else %} bg-sky-950 text-sky-300 border border-sky-800 {% endif %}">
+                        {{ sq.color.replace('google-', '').capitalize() }} Squad
+                    </span>
+                    <span class="font-mono text-xs font-bold text-amber-400">
+                        {{ sq.total_points }} MP
+                    </span>
+                </div>
+
+                <!-- Squad Title -->
+                <h3 class="text-xl font-bold text-white group-hover:text-google-yellow transition">
+                    {{ sq.name }}
+                </h3>
+                <p class="text-xs text-slate-400 mt-1">
+                    Captain: <span class="text-slate-200 font-semibold">{{ sq.captain }}</span>
+                </p>
+
+                {% if sq.motto %}
+                <p class="text-xs text-slate-500 italic mt-2 line-clamp-2">
+                    "{{ sq.motto }}"
+                </p>
+                {% endif %}
+
+                <!-- Progress Bar -->
+                <div class="mt-5 space-y-1.5">
+                    <div class="flex justify-between text-xs font-medium">
+                        <span class="text-slate-400">Flowers Found</span>
+                        <span class="text-white font-bold font-mono">{{ sq.flowers_count }} / {{ total_flowers }}</span>
+                    </div>
+                    <div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
+                        <div class="bg-gradient-to-r from-google-blue to-google-green h-full rounded-full transition-all duration-500"
+                             style="width: {{ (sq.flowers_count / total_flowers * 100)|round }}%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Footer -->
+            <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
+                <span class="text-xs text-slate-400">
+                    👥 {{ sq.members_count }} Knights
+                </span>
+                <a href="{{ url_for('squad_detail', squad_id=sq.id) }}" class="inline-flex items-center gap-1.5 text-xs font-bold text-google-blue hover:text-white transition">
+                    <span>Open Grimoire</span>
+                    <span>&rarr;</span>
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-span-full py-12 text-center text-slate-500">
+            <p class="text-lg">No Magic Squads registered yet.</p>
+            <a href="{{ url_for('register') }}" class="mt-3 inline-block text-xs font-bold text-google-blue hover:underline">
+                Register the first squad &rarr;
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}
