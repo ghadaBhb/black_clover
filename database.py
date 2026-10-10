@@ -250,21 +250,36 @@ def init_db(seed_sample_data=True):
     conn = get_db()
     cursor = conn.cursor()
 
+    cursor.execute("LOCK TABLE claims IN SHARE ROW EXCLUSIVE MODE")
     cursor.execute('''
-        SELECT flower_id
-        FROM claims
-        GROUP BY flower_id
-        HAVING COUNT(*) > 1
-        LIMIT 1
+        WITH ranked_claims AS (
+            SELECT id,
+                   flower_id,
+                   squad_id,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY flower_id
+                       ORDER BY claimed_at ASC NULLS LAST, id ASC
+                   ) AS claim_rank
+            FROM claims
+        )
+        DELETE FROM claims AS duplicate
+        USING ranked_claims
+        WHERE duplicate.id = ranked_claims.id
+          AND ranked_claims.claim_rank > 1
+        RETURNING ranked_claims.flower_id, ranked_claims.squad_id
     ''')
-    duplicate_claim = cursor.fetchone()
-    if duplicate_claim:
-        conn.rollback()
-        cursor.close()
-        conn.close()
-        raise RuntimeError(
-            f"Flower #{duplicate_claim['flower_id']} is already claimed by multiple teams. "
-            "Resolve duplicate claims in Supabase before starting the app."
+    removed_claims = cursor.fetchall()
+    if removed_claims:
+        flower_ids = sorted({claim['flower_id'] for claim in removed_claims})
+        cursor.execute(
+            '''
+            INSERT INTO activity_log (event_type, description)
+            VALUES ('SYSTEM', %s)
+            ''',
+            (
+                f"Startup removed {len(removed_claims)} duplicate flower claim(s), "
+                f"preserving the earliest claim for flower(s): {', '.join(map(str, flower_ids))}.",
+            ),
         )
 
     cursor.execute('''

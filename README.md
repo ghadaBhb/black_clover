@@ -45,7 +45,7 @@ This repository's Render Blueprint deploys the Flask app in `app.py` (v1):
 
 On first startup, the app inserts its default flowers and demo squads if those tables are empty. Existing rows are left in place. The app now uses Supabase directly; it does not automatically copy existing records from `black_clover.db`.
 
-Each flower can be collected by only one team. On startup, the app checks existing claims and creates a unique index on `claims.flower_id` to enforce this rule, including simultaneous submissions. If Supabase already contains multiple claims for a flower, startup stops and reports a duplicate; review and resolve those rows in Supabase before restarting rather than deleting claim history automatically. Team flower pages and the home page show whether each flower is available or collected, and the collecting team.
+Each flower can be collected by only one team. On startup, the app keeps the earliest claim for each flower (by `claimed_at`, then claim ID), removes any later duplicate claim rows, and records the cleanup in the activity log. It then creates a unique index on `claims.flower_id` to enforce this rule, including simultaneous submissions. Team flower pages and the home page show whether each flower is available or collected, and the collecting team.
 
 ---
 
