@@ -51,7 +51,7 @@ function renderLeaderboardTable(squads, totalFlowers) {
     if (!tbody) return;
 
     if (!squads || squads.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-500 italic">No squads registered yet!</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-500 italic">No teams registered yet.</td></tr>';
         return;
     }
 
@@ -77,7 +77,6 @@ function renderLeaderboardTable(squads, totalFlowers) {
                     <span>${escapeHtml(sq.name)}</span>
                     ${rank === 1 ? '<span class="text-xs text-amber-400">👑</span>' : ''}
                 </div>
-                ${sq.motto ? `<div class="text-[11px] text-slate-400 italic line-clamp-1">"${escapeHtml(sq.motto)}"</div>` : ''}
             </td>
 
             <td class="py-4 px-4 text-slate-300 text-xs font-medium">
@@ -99,13 +98,13 @@ function renderLeaderboardTable(squads, totalFlowers) {
                 <span class="font-mono font-extrabold text-amber-400 text-base">
                     ${sq.total_points}
                 </span>
-                <span class="text-xs text-slate-500 font-mono">MP</span>
+                <span class="text-xs text-slate-500 font-mono">points</span>
             </td>
 
             <td class="py-4 px-4 text-right">
                 <a href="/squad/${sq.id}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold transition">
-                    <span>📖</span>
-                    <span>Grimoire</span>
+                    <span>👥</span>
+                    <span>Team Details</span>
                 </a>
             </td>
         </tr>

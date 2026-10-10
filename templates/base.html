@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}GDG x Black Clover: The 20 Mana Flowers Hunt{% endblock %}</title>
+    <title>{% block title %}GDG Open Day Flower Hunt{% endblock %}</title>
     
     <!-- Google Fonts & Tailwind -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -81,7 +81,7 @@
                             <span class="truncate font-extrabold text-white text-xs sm:text-lg tracking-tight">Google Developer Groups</span>
                             <span class="hidden sm:inline text-[10px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded bg-google-yellow text-slate-950">Open Day</span>
                         </div>
-                        <p class="truncate text-[10px] sm:text-xs font-anime text-amber-400 tracking-wider">Black Clover: 20 Mana Flowers Hunt</p>
+                        <p class="truncate text-[10px] sm:text-xs text-amber-400 tracking-wider">Open Day Flower Hunt</p>
                     </div>
                 </a>
 
@@ -91,17 +91,17 @@
                         <span>🏆</span> Leaderboard
                     </a>
                     <a href="{{ url_for('squads_list') }}" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
-                        <span>📖</span> Squad Grimoires
+                        <span>👥</span> Teams
                     </a>
                     <a href="{{ url_for('register') }}" class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
-                        <span>⚔️</span> Register Squad
+                        <span>➕</span> Register Team
                     </a>
                 </div>
 
                 <!-- Right Actions: Sound & Fast Claim Button -->
                 <div class="flex shrink-0 items-center gap-1.5 sm:gap-3">
                     <!-- Audio FX Toggle -->
-                    <button id="sfx-toggle" onclick="toggleAudio()" title="Toggle Anime Sound FX" class="shrink-0 p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 transition border border-slate-700 text-sm">
+                    <button id="sfx-toggle" onclick="toggleAudio()" title="Toggle sound effects" class="shrink-0 p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 transition border border-slate-700 text-sm">
                         <span id="sfx-icon">🔊</span>
                     </button>
 
@@ -119,8 +119,8 @@
         <!-- Mobile sub-navigation bar -->
         <div class="md:hidden flex items-center justify-around gap-1 bg-slate-900/90 border-t border-slate-800 py-2 text-xs font-semibold px-2">
             <a href="{{ url_for('leaderboard') }}" class="text-slate-300 hover:text-google-yellow py-1 px-2 text-center">🏆 Leaderboard</a>
-            <a href="{{ url_for('squads_list') }}" class="text-slate-300 hover:text-google-blue py-1 px-2 text-center">📖 Squads</a>
-            <a href="{{ url_for('register') }}" class="text-slate-300 hover:text-google-green py-1 px-2 text-center">⚔️ Register</a>
+            <a href="{{ url_for('squads_list') }}" class="text-slate-300 hover:text-google-blue py-1 px-2 text-center">👥 Teams</a>
+            <a href="{{ url_for('register') }}" class="text-slate-300 hover:text-google-green py-1 px-2 text-center">➕ Register</a>
         </div>
     </nav>
 
@@ -160,28 +160,27 @@
                     🌸
                 </div>
                 <div>
-                    <h3 class="text-lg font-bold text-white font-anime">Claim Mana Flower</h3>
-                    <p class="text-xs text-slate-400">Enter the secret rune code found on the physical flower tag</p>
+                    <h3 class="text-lg font-bold text-white">Claim a Flower</h3>
+                    <p class="text-xs text-slate-400">Enter the code on the flower tag.</p>
                 </div>
             </div>
 
             <form id="global-claim-form" onsubmit="submitFlowerClaim(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Select Your Squad</label>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Select Your Team</label>
                     <select id="claim-squad-select" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-google-blue">
-                        <option value="">-- Choose Squad --</option>
+                        <option value="">-- Choose a team --</option>
                     </select>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Rune Passcode</label>
-                    <input type="text" id="claim-passcode" required placeholder="e.g. BRIAR-01 or FLAME-02" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white font-mono uppercase tracking-wider focus:outline-none focus:border-google-yellow placeholder:text-slate-600">
-                    <p class="text-[11px] text-slate-400 mt-1">Found on the tag attached to the hidden flower.</p>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Flower Code</label>
+                    <input type="text" id="claim-passcode" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white font-mono uppercase tracking-wider focus:outline-none focus:border-google-yellow">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Found By (Member Name)</label>
-                    <input type="text" id="claim-member-name" placeholder="e.g. Asta / Member Name" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-google-green placeholder:text-slate-600">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Found By</label>
+                    <input type="text" id="claim-member-name" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-google-green">
                 </div>
 
                 <div id="claim-status-msg" class="hidden p-3 rounded-lg text-xs font-semibold"></div>
@@ -190,7 +189,7 @@
                     <button type="button" onclick="closeClaimModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold">Cancel</button>
                     <button type="submit" id="claim-submit-btn" class="px-5 py-2 rounded-lg bg-gradient-to-r from-google-blue to-google-green text-white text-xs font-bold hover:brightness-110 active:scale-95 transition flex items-center gap-1.5">
                         <span>⚡</span>
-                        <span>Unlock Mana</span>
+                        <span>Submit Claim</span>
                     </button>
                 </div>
             </form>
@@ -210,13 +209,12 @@
                     </div>
                     <div>
                         <p class="text-sm font-bold text-white">Google Developer Groups (GDG)</p>
-                        <p class="text-xs text-slate-400">Open Day • Black Clover Magic Knights Scavenger Hunt</p>
+                        <p class="text-xs text-slate-400">Open Day • Flower Hunt</p>
                     </div>
                 </div>
 
                 <div class="text-center md:text-right">
-                    <p class="text-xs text-amber-300/90 font-anime italic break-words">"Surpass your limits! Right here, right now!" — Yami Sukehiro</p>
-                    <p class="text-[11px] text-slate-500 mt-0.5">20 Mystical Flowers hidden in the Academy. May the best Squad become Wizard Kings.</p>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Find the hidden flowers and see which team earns the most points.</p>
                 </div>
 
             </div>

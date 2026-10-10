@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Wizard King Leaderboard | GDG x Black Clover{% endblock %}
+{% block title %}Team Leaderboard | GDG Open Day{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -35,10 +35,10 @@
                 <span class="text-3xl">👑</span>
                 <div>
                     <h1 class="text-2xl sm:text-4xl font-black text-white font-anime tracking-wide flex items-center gap-2">
-                        WIZARD KING STANDINGS
+                        TEAM LEADERBOARD
                     </h1>
                     <p class="text-xs sm:text-sm text-slate-400 mt-1">
-                        Live rankings of Magic Knight Squads hunting the 20 Mana Flowers.
+                        Live team rankings for the flower hunt.
                     </p>
                 </div>
             </div>
@@ -75,11 +75,11 @@
     <!-- Top 3 Animated Cards (Large View) -->
     <div id="top-podium" class="grid grid-cols-1 md:grid-cols-3 gap-6">
         {% if squads|length >= 1 %}
-            <!-- 1st Place Wizard King -->
+            <!-- 1st Place -->
             {% set first = squads[0] %}
             <div class="md:order-2 relative bg-gradient-to-b from-amber-950/40 via-google-card to-slate-900 border-2 border-amber-400 rounded-2xl p-6 shadow-2xl shadow-amber-500/20 transform md:-translate-y-2">
                 <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-amber-400 text-slate-950 text-xs font-black font-anime uppercase tracking-widest shadow-md">
-                    👑 CURRENT WIZARD KING
+                    🥇 1ST PLACE
                 </div>
 
                 <div class="text-center mt-2">
@@ -87,15 +87,15 @@
                         🥇
                     </div>
                     <h3 class="text-2xl font-black text-white mt-3 font-anime">{{ first.name }}</h3>
-                    <p class="text-xs text-amber-300 font-medium">Captain: {{ first.captain }}</p>
+                    <p class="text-xs text-amber-300 font-medium">Team leader: {{ first.captain }}</p>
                     
                     <div class="mt-4 bg-slate-950/60 rounded-xl p-3 border border-slate-800">
                         <div class="text-3xl font-black text-amber-400 font-mono">{{ first.flowers_count }} <span class="text-sm font-sans text-slate-400">/ {{ total_flowers }} Flowers</span></div>
-                        <div class="text-sm font-bold text-slate-300 font-mono mt-1">{{ first.total_points }} Mana Points</div>
+                        <div class="text-sm font-bold text-slate-300 font-mono mt-1">{{ first.total_points }} points</div>
                     </div>
 
                     <a href="{{ url_for('squad_detail', squad_id=first.id) }}" class="mt-4 inline-block text-xs font-bold text-google-blue hover:text-white transition">
-                        Inspect Grimoire &rarr;
+                        View team &rarr;
                     </a>
                 </div>
             </div>
@@ -110,15 +110,15 @@
                     </div>
                     <div class="text-xs font-black text-slate-400 uppercase tracking-widest mt-1">2ND RANK</div>
                     <h3 class="text-xl font-bold text-white mt-1">{{ second.name }}</h3>
-                    <p class="text-xs text-slate-400">Captain: {{ second.captain }}</p>
+                    <p class="text-xs text-slate-400">Team leader: {{ second.captain }}</p>
 
                     <div class="mt-4 bg-slate-950/60 rounded-xl p-3 border border-slate-800">
                         <div class="text-2xl font-bold text-white font-mono">{{ second.flowers_count }} <span class="text-xs font-sans text-slate-400">/ {{ total_flowers }} Flowers</span></div>
-                        <div class="text-xs font-bold text-slate-400 font-mono mt-1">{{ second.total_points }} MP</div>
+                        <div class="text-xs font-bold text-slate-400 font-mono mt-1">{{ second.total_points }} points</div>
                     </div>
                 </div>
                 <a href="{{ url_for('squad_detail', squad_id=second.id) }}" class="mt-4 text-center text-xs font-bold text-google-blue hover:text-white transition">
-                    Inspect Grimoire &rarr;
+                    View team &rarr;
                 </a>
             </div>
             {% endif %}
@@ -133,28 +133,28 @@
                     </div>
                     <div class="text-xs font-black text-amber-600 uppercase tracking-widest mt-1">3RD RANK</div>
                     <h3 class="text-xl font-bold text-white mt-1">{{ third.name }}</h3>
-                    <p class="text-xs text-slate-400">Captain: {{ third.captain }}</p>
+                    <p class="text-xs text-slate-400">Team leader: {{ third.captain }}</p>
 
                     <div class="mt-4 bg-slate-950/60 rounded-xl p-3 border border-slate-800">
                         <div class="text-2xl font-bold text-white font-mono">{{ third.flowers_count }} <span class="text-xs font-sans text-slate-400">/ {{ total_flowers }} Flowers</span></div>
-                        <div class="text-xs font-bold text-slate-400 font-mono mt-1">{{ third.total_points }} MP</div>
+                        <div class="text-xs font-bold text-slate-400 font-mono mt-1">{{ third.total_points }} points</div>
                     </div>
                 </div>
                 <a href="{{ url_for('squad_detail', squad_id=third.id) }}" class="mt-4 text-center text-xs font-bold text-google-blue hover:text-white transition">
-                    Inspect Grimoire &rarr;
+                    View team &rarr;
                 </a>
             </div>
             {% endif %}
         {% endif %}
     </div>
 
-    <!-- Complete Squad Table / Roster -->
+    <!-- Team Leaderboard -->
     <div class="bg-google-surface border border-google-border rounded-2xl overflow-hidden shadow-xl">
         <div class="px-6 py-4 border-b border-google-border flex items-center justify-between">
             <h2 class="text-sm sm:text-base font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                <span>📊</span> All Magic Knight Squads
+                <span>📊</span> All Teams
             </h2>
-            <span class="text-xs text-slate-400">{{ squads|length }} Squads Competing</span>
+            <span class="text-xs text-slate-400">{{ squads|length }} Teams</span>
         </div>
 
         <div class="overflow-x-auto">
@@ -162,10 +162,10 @@
                 <thead>
                     <tr class="bg-slate-900/80 text-[11px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-800">
                         <th class="py-3.5 px-4 text-center w-16">Rank</th>
-                        <th class="py-3.5 px-4">Squad Name</th>
-                        <th class="py-3.5 px-4">Captain</th>
+                        <th class="py-3.5 px-4">Team Name</th>
+                        <th class="py-3.5 px-4">Team Leader</th>
                         <th class="py-3.5 px-4 text-center">Flowers Found</th>
-                        <th class="py-3.5 px-4 text-right">Mana Points (MP)</th>
+                        <th class="py-3.5 px-4 text-right">Points</th>
                         <th class="py-3.5 px-4 text-right">Action</th>
                     </tr>
                 </thead>
@@ -183,7 +183,7 @@
                             </span>
                         </td>
 
-                        <!-- Squad Name & Motto -->
+                        <!-- Team Name -->
                         <td class="py-4 px-4">
                             <div class="font-bold text-white flex items-center gap-2">
                                 <span>{{ sq.name }}</span>
@@ -191,12 +191,9 @@
                                 <span class="text-xs text-amber-400">👑</span>
                                 {% endif %}
                             </div>
-                            {% if sq.motto %}
-                            <div class="text-[11px] text-slate-400 italic line-clamp-1">"{{ sq.motto }}"</div>
-                            {% endif %}
                         </td>
 
-                        <!-- Captain -->
+                        <!-- Team Leader -->
                         <td class="py-4 px-4 text-slate-300 text-xs font-medium">
                             {{ sq.captain }}
                         </td>
@@ -213,26 +210,25 @@
                             </div>
                         </td>
 
-                        <!-- Mana Points -->
+                        <!-- Points -->
                         <td class="py-4 px-4 text-right">
                             <span class="font-mono font-extrabold text-amber-400 text-base">
                                 {{ sq.total_points }}
                             </span>
-                            <span class="text-xs text-slate-500 font-mono">MP</span>
                         </td>
 
-                        <!-- Link to Grimoire -->
+                        <!-- Team Details -->
                         <td class="py-4 px-4 text-right">
                             <a href="{{ url_for('squad_detail', squad_id=sq.id) }}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold transition">
-                                <span>📖</span>
-                                <span>Grimoire</span>
+                                <span>👥</span>
+                                <span>Team Details</span>
                             </a>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
                         <td colspan="6" class="py-8 text-center text-slate-500 italic">
-                            No squads registered yet! Be the first to register.
+                            No teams registered yet. Be the first to register.
                         </td>
                     </tr>
                     {% endfor %}

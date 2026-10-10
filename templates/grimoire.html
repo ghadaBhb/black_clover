@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}{{ squad.name }}'s Grimoire | GDG x Black Clover{% endblock %}
+{% block title %}{{ squad.name }} | Team Details{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-    <!-- Grimoire Header / Squad Cover -->
+    <!-- Team Details -->
     <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-google-surface to-slate-950 border-2 border-google-border p-4 sm:p-8 shadow-2xl">
         <!-- Glow matching squad color -->
         <div class="absolute -top-24 right-10 w-64 h-64 rounded-full blur-3xl opacity-25 pointer-events-none
@@ -19,7 +19,7 @@
             <div class="space-y-3">
                 <div class="flex items-center gap-2">
                     <span class="px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-slate-800 text-amber-400 border border-slate-700">
-                        📖 SQUAD GRIMOIRE
+                        TEAM DETAILS
                     </span>
                     <span class="text-xs text-slate-400 font-mono">ID: #{{ squad.id }}</span>
                 </div>
@@ -29,18 +29,15 @@
                 </h1>
                 
                 <p class="text-xs sm:text-sm text-slate-300">
-                    Led by Captain <span class="text-white font-bold">{{ squad.captain }}</span>
-                    {% if squad.motto %}
-                    • <span class="italic text-amber-300/90 font-anime">"{{ squad.motto }}"</span>
-                    {% endif %}
+                    Team leader: <span class="text-white font-bold">{{ squad.captain }}</span>
                 </p>
 
                 <!-- Members Badges -->
                 <div class="flex flex-wrap items-center gap-1.5 pt-1">
-                    <span class="text-[11px] text-slate-500 font-semibold uppercase mr-1">Roster:</span>
+                    <span class="text-[11px] text-slate-500 font-semibold uppercase mr-1">Members:</span>
                     {% for m in members %}
                     <span class="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-[11px] text-slate-300 flex items-center gap-1">
-                        <span class="text-google-blue">🛡️</span> {{ m.name }} <span class="text-slate-500 text-[9px]">({{ m.role }})</span>
+                        <span class="text-google-blue">•</span> {{ m.name }} {% if m.role and m.role != 'Member' %}<span class="text-slate-500 text-[9px]">({{ m.role }})</span>{% endif %}
                     </span>
                     {% endfor %}
                 </div>
@@ -55,7 +52,7 @@
                 <div class="h-10 w-px bg-slate-800"></div>
                 <div class="text-center">
                     <div class="text-3xl font-black text-amber-400 font-mono">{{ total_points }}</div>
-                    <div class="text-[11px] text-slate-400 uppercase font-semibold">Mana Points</div>
+                    <div class="text-[11px] text-slate-400 uppercase font-semibold">Points</div>
                 </div>
             </div>
         </div>
@@ -63,7 +60,7 @@
         <!-- Progress Bar -->
         <div class="mt-6 pt-6 border-t border-slate-800/80">
             <div class="flex justify-between items-center text-xs font-semibold mb-1.5">
-                <span class="text-slate-400">Grimoire Completion</span>
+                <span class="text-slate-400">Flowers Found</span>
                 <span class="text-amber-400 font-mono font-bold">{{ (claimed_count / total_flowers * 100)|round }}%</span>
             </div>
             <div class="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-800">
@@ -73,27 +70,27 @@
         </div>
     </div>
 
-    <!-- Quick Claim Banner for this Squad -->
+    <!-- Quick Flower Claim -->
     <div class="bg-gradient-to-r from-slate-900 to-google-surface border border-google-border rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                <span>⚡</span> Quick Unlock: Found a Flower in the School?
+                <span>⚡</span> Found a flower?
             </h3>
-            <p class="text-xs text-slate-400">Enter the Rune Passcode printed on the physical flower card.</p>
+            <p class="text-xs text-slate-400">Enter the code printed on the flower card.</p>
         </div>
 
-        <form onsubmit="handleDirectGrimoireClaim(event, {{ squad.id }})" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-            <input type="text" id="grimoire-code-input" placeholder="e.g. BRIAR-01" required class="min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-mono uppercase tracking-wider focus:outline-none focus:border-google-blue flex-grow sm:w-44 placeholder:text-slate-600">
+        <form onsubmit="submitTeamFlowerClaim(event, {{ squad.id }})" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <input type="text" id="grimoire-code-input" required aria-label="Flower code" class="min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-mono uppercase tracking-wider focus:outline-none focus:border-google-blue flex-grow sm:w-44">
             <button type="submit" class="px-4 py-2 rounded-lg bg-gradient-to-r from-google-blue to-google-green text-white text-xs font-bold hover:brightness-110 active:scale-95 transition whitespace-nowrap">
-                Unlock
+                Submit
             </button>
         </form>
     </div>
 
     <!-- Filter Buttons -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h2 class="text-lg sm:text-xl font-black text-white font-anime tracking-wide flex items-center gap-2">
-            <span>🌸</span> The 20 Flower Pages
+        <h2 class="text-lg sm:text-xl font-black text-white tracking-wide flex items-center gap-2">
+            <span>🌸</span> Flowers
         </h2>
 
         <div class="flex flex-wrap items-center gap-1.5 text-xs">
@@ -101,7 +98,7 @@
                 All (20)
             </button>
             <button onclick="filterFlowerGrid('unlocked')" id="btn-filter-unlocked" class="px-3 py-1.5 rounded-lg bg-slate-900 text-slate-400 hover:text-white border border-slate-800">
-                Unlocked ({{ claimed_count }})
+                Found ({{ claimed_count }})
             </button>
             <button onclick="filterFlowerGrid('locked')" id="btn-filter-locked" class="px-3 py-1.5 rounded-lg bg-slate-900 text-slate-400 hover:text-white border border-slate-800">
                 Remaining ({{ total_flowers - claimed_count }})
@@ -150,17 +147,17 @@
                     {% if f.is_claimed %}
                     <div class="p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-800/80 text-[11px] text-emerald-200">
                         <div class="font-bold flex items-center gap-1 text-emerald-300">
-                            <span>✨</span> MANA UNLOCKED!
+                            <span>✓</span> FOUND
                         </div>
                         <div class="text-[10px] text-slate-400 mt-0.5">
-                            By {{ f.claimed_by or 'Squad Member' }} at {{ f.claimed_at[11:19] if f.claimed_at else '' }}
+                            By {{ f.claimed_by or 'Team member' }} at {{ f.claimed_at[11:19] if f.claimed_at else '' }}
                         </div>
                     </div>
                     {% else %}
                     <!-- Riddle / Clue for locked flowers -->
                     <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-[11px] space-y-1.5">
                         <div class="text-amber-300 font-semibold flex items-center gap-1 text-[10px] uppercase tracking-wider">
-                            <span>📜</span> Grimoire Clue:
+                            <span>📜</span> Clue:
                         </div>
                         <p class="text-slate-300 italic text-[11px] leading-relaxed">
                             "{{ f.riddle }}"
@@ -174,7 +171,7 @@
             <div class="mt-4 pt-3 border-t border-slate-800">
                 {% if f.is_claimed %}
                 <div class="text-center text-[11px] text-emerald-400 font-bold">
-                    ✓ In Grimoire
+                    ✓ Found
                 </div>
                 {% else %}
                 <button onclick="openClaimModalWithFlower('{{ f.id }}', '{{ squad.id }}')" class="w-full py-1.5 rounded-lg bg-slate-800 hover:bg-google-blue text-slate-200 hover:text-white text-xs font-semibold transition flex items-center justify-center gap-1">
@@ -190,7 +187,7 @@
 </div>
 
 <script>
-    function handleDirectGrimoireClaim(event, squadId) {
+    function submitTeamFlowerClaim(event, squadId) {
         event.preventDefault();
         const codeInput = document.getElementById('grimoire-code-input');
         const passcode = codeInput.value.trim();
@@ -202,7 +199,7 @@
             body: JSON.stringify({
                 squad_id: squadId,
                 passcode: passcode,
-                claimed_by: 'Grimoire Keeper'
+                claimed_by: 'Team member'
             })
         })
         .then(r => r.json())
@@ -218,7 +215,7 @@
             }
         })
         .catch(err => {
-            alert('Network error connecting to the Mana Grid.');
+            alert('Could not connect to the server. Please try again.');
         });
     }
 

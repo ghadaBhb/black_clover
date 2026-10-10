@@ -1,5 +1,6 @@
 import os
 import re
+from collections import defaultdict
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, Response, make_response
 from database import get_db, init_db
@@ -87,33 +88,41 @@ def register():
         captain = request.form.get('captain', '').strip()
         captain_email = request.form.get('captain_email', '').strip()
         color = request.form.get('color', 'google-blue')
-        motto = request.form.get('motto', '').strip()
         
         member_names = request.form.getlist('members[]')
         member_emails = [email.strip() for email in request.form.getlist('emails[]')]
-        member_roles = request.form.getlist('roles[]')
         
         if not name or not captain:
-            flash("Squad Name and Captain Name are required!", "danger")
+            flash("Team name and team leader name are required.", "danger")
+            return redirect(url_for('register'))
+
+        if (
+            len(name) < 2
+            or len(name) > 50
+            or not name[0].isalnum()
+            or not name[-1].isalnum()
+            or any(not (character.isalnum() or character in " &'-") for character in name)
+        ):
+            flash("Enter a team name from 2 to 50 characters using letters, numbers, spaces, apostrophes, hyphens, or ampersands.", "danger")
             return redirect(url_for('register'))
 
         email_pattern = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
         emails_to_check = [captain_email] + member_emails
         if any(email and not email_pattern.fullmatch(email) for email in emails_to_check):
-            flash("Enter a valid email address for each member, or leave it blank.", "danger")
+            flash("Enter a valid email address or leave it blank.", "danger")
             return redirect(url_for('register'))
         
         # Check uniqueness
         existing = query_db("SELECT id FROM squads WHERE LOWER(name) = LOWER(%s)", (name,), one=True)
         if existing:
-            flash(f"A squad named '{name}' is already registered in the Magic Knights!", "warning")
+            flash(f"A team named '{name}' is already registered.", "warning")
             return redirect(url_for('register'))
         
         conn = get_db()
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO squads (name, captain, color, motto) VALUES (%s, %s, %s, %s) RETURNING id",
-            (name, captain, color, motto)
+            "INSERT INTO squads (name, captain, color) VALUES (%s, %s, %s) RETURNING id",
+            (name, captain, color)
         )
         squad_id = cur.fetchone()['id']
         
@@ -123,26 +132,22 @@ def register():
             (squad_id, captain, captain_email or None)
         )
         
-        for index, (m_name, m_role) in enumerate(zip(member_names, member_roles)):
+        for index, m_name in enumerate(member_names):
             m_name = m_name.strip()
             m_email = member_emails[index] if index < len(member_emails) else ''
             if m_name and m_name.lower() != captain.lower():
                 cur.execute(
-                    "INSERT INTO members (squad_id, name, role, email) VALUES (%s, %s, %s, %s)",
-                    (
-                        squad_id,
-                        m_name,
-                        m_role.strip() or 'Magic Knight',
-                        m_email or None,
-                    )
+                    "INSERT INTO members (squad_id, name, role, email) VALUES (%s, %s, 'Member', %s)",
+                    (squad_id, m_name, m_email or None)
                 )
         
         conn.commit()
+        cur.close()
         conn.close()
         
-        log_activity("REGISTER", f"New Squad registered: '{name}' led by {captain}")
-        flash(f"Squad '{name}' registered successfully! Your Grimoire is now active.", "success")
-        return redirect(url_for('squad_detail', squad_id=squad_id))
+        log_activity("REGISTER", f"New team registered: '{name}' led by {captain}")
+        flash(f"Team '{name}' registered successfully.", "success")
+        return redirect(url_for('leaderboard'))
 
     return render_template('register.html')
 
@@ -231,11 +236,16 @@ def admin():
     for cl in claims:
         claim_matrix[(cl['squad_id'], cl['flower_id'])] = cl['claimed_at']
 
+    team_members = defaultdict(list)
+    for member in query_db("SELECT squad_id, name, role, email FROM members ORDER BY id ASC"):
+        team_members[member['squad_id']].append(member)
+
     logs = query_db("SELECT * FROM activity_log ORDER BY id DESC LIMIT 50")
 
     resp = make_response(render_template('admin.html',
                                           is_authenticated=True,
                                           squads=squads,
+                                          team_members=team_members,
                                           flowers=flowers,
                                           claim_matrix=claim_matrix,
                                           logs=logs,

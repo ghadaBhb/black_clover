@@ -131,7 +131,7 @@ function populateSquadDropdown() {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success' && data.leaderboard) {
-                select.innerHTML = '<option value="">-- Choose Squad --</option>';
+                select.innerHTML = '<option value="">-- Choose a team --</option>';
                 data.leaderboard.forEach(sq => {
                     const opt = document.createElement('option');
                     opt.value = sq.id;
@@ -152,12 +152,12 @@ function submitFlowerClaim(event) {
     const submitBtn = document.getElementById('claim-submit-btn');
 
     if (!squadId || !passcode) {
-        showStatus('Please select a squad and enter the passcode.', 'error');
+        showStatus('Please select a team and enter the flower code.', 'error');
         return;
     }
 
     submitBtn.disabled = true;
-    submitBtn.innerText = 'Verifying Mana...';
+    submitBtn.innerText = 'Submitting...';
 
     fetch('/api/claim', {
         method: 'POST',
@@ -165,18 +165,18 @@ function submitFlowerClaim(event) {
         body: JSON.stringify({
             squad_id: squadId,
             passcode: passcode,
-            claimed_by: memberName || 'Magic Knight'
+            claimed_by: memberName || 'Team member'
         })
     })
     .then(r => r.json())
     .then(data => {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<span>⚡</span><span>Unlock Mana</span>';
+        submitBtn.innerHTML = '<span>⚡</span><span>Submit Claim</span>';
 
         if (data.status === 'success') {
             playSuccessSound();
             triggerConfetti();
-            showStatus(`✨ ${data.message} (+${data.flower.points} MP)`, 'success');
+            showStatus(`✨ ${data.message} (+${data.flower.points} points)`, 'success');
             
             // Clear inputs
             document.getElementById('claim-passcode').value = '';
@@ -195,7 +195,7 @@ function submitFlowerClaim(event) {
     })
     .catch(err => {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<span>⚡</span><span>Unlock Mana</span>';
+        submitBtn.innerHTML = '<span>⚡</span><span>Submit Claim</span>';
         playErrorSound();
         showStatus('Network connection error.', 'error');
     });
