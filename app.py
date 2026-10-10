@@ -6,9 +6,11 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, f
 from database import get_db, init_db, DEFAULT_FLOWERS
 
 app = Flask(__name__)
-app.secret_key = 'gdg-black-clover-secret-mana-key-2026'
+app.secret_key = os.environ.get('SECRET_KEY', 'gdg-black-clover-secret-mana-key-2026')
 
-ADMIN_PIN = "10GDG-open10DAY26"
+ADMIN_PIN = os.environ.get('ADMIN_PIN', "10GDG-open10DAY26")
+
+init_db()
 
 def query_db(query, args=(), one=False):
     conn = get_db()
@@ -477,6 +479,5 @@ def export_csv():
     )
 
 if __name__ == '__main__':
-    init_db()
     print("Magic Kingdom Grimoire running on http://127.0.0.1:5000")
     app.run(host='0.0.0.0', port=5000, debug=True)
