@@ -1,0 +1,543 @@
+{% extends "base.html" %}
+
+{% block title %}Organizer Command Desk • Google Developer Groups{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    {% if not is_authenticated %}
+    <!-- Admin Login (Google Clean Sign-in Card) -->
+    <div class="max-w-md mx-auto my-12 bg-white dark:bg-google-carddark border border-google-border dark:border-slate-800 rounded-2xl p-8 shadow-google text-center space-y-6">
+        <!-- Segmented GDG Logo -->
+        <div class="flex justify-center">
+            <svg viewBox="0 0 160 96" fill="none" class="h-10 w-auto">
+                <path d="M52 18L18 48" stroke="#EA4335" stroke-width="16" stroke-linecap="round"/>
+                <path d="M18 48L52 78" stroke="#F9AB00" stroke-width="16" stroke-linecap="round"/>
+                <path d="M108 18L142 48" stroke="#4285F4" stroke-width="16" stroke-linecap="round"/>
+                <path d="M142 48L108 78" stroke="#34A853" stroke-width="16" stroke-linecap="round"/>
+            </svg>
+        </div>
+
+        <div>
+            <h2 class="text-xl font-bold text-google-charcoal dark:text-white">GDG Organizer Desk</h2>
+            <p class="text-xs text-google-grey dark:text-slate-400 mt-1">Please enter your organizer PIN to manage flowers & teams</p>
+        </div>
+
+        <form action="{{ url_for('admin') }}" method="POST" class="space-y-4">
+            <input type="hidden" name="action" value="login">
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-google-grey dark:text-slate-300 mb-1.5 text-left">Organizer PIN</label>
+                <input type="password" name="pin" required placeholder="Enter PIN" class="w-full bg-google-offwhite dark:bg-slate-900 border border-google-border dark:border-slate-700 rounded-xl px-4 py-3 text-center text-lg font-mono text-google-charcoal dark:text-white tracking-widest focus:outline-none focus:ring-2 focus:ring-google-blue">
+            </div>
+
+            <button type="submit" class="w-full py-3 rounded-xl bg-google-blue hover:bg-blue-600 text-white font-bold text-sm shadow-google transition">
+                Sign In to Command Desk
+            </button>
+        </form>
+        <p class="text-[11px] text-google-grey dark:text-slate-500">Default PIN: <code class="text-amber-800 dark:text-amber-300 bg-pastel-yellow/60 px-2 py-0.5 rounded font-mono font-bold">10GDG-open10DAY26</code></p>
+    </div>
+
+    {% else %}
+    <!-- Admin Command Center (Humanized Material Layout) -->
+
+    <!-- Top Admin Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-google-border dark:border-slate-800 pb-6">
+        <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pastel-blue dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-xs font-bold text-blue-900 dark:text-blue-300">
+                <span class="w-2 h-2 rounded-full bg-google-blue"></span>
+                <span>GDG Organizer Workspace</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-google-charcoal dark:text-white tracking-tight mt-1">
+                Check-in Desk & Flower Manager
+            </h1>
+            <p class="text-xs text-google-grey dark:text-slate-400">Register arriving squads and record physical flowers delivered to the booth.</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+            <a href="{{ url_for('cheat_sheet') }}" target="_blank" class="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-google-border dark:border-slate-700 text-google-charcoal dark:text-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow-xs">
+                <span>📜</span> Marshal Locations Sheet
+            </a>
+            <a href="{{ url_for('export_csv') }}" class="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-google-border dark:border-slate-700 text-google-charcoal dark:text-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow-xs">
+                <span>📥</span> Export CSV Results
+            </a>
+            <form action="{{ url_for('api_admin_reset_awards') }}" method="POST" onsubmit="return confirm('⚠️ Reset all flower awards back to 0?');" class="inline">
+                <button type="submit" class="px-3.5 py-2 rounded-xl bg-pastel-red dark:bg-rose-950/80 hover:opacity-90 border border-red-300 dark:border-rose-800 text-red-900 dark:text-rose-200 text-xs font-bold transition flex items-center gap-1.5">
+                    <span>🔄</span> Reset Round
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN FLOWER CHECK-IN CONSOLE -->
+    <div class="bg-white dark:bg-google-carddark border border-google-border dark:border-slate-800 rounded-2xl p-6 shadow-soft space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-google-border dark:border-slate-800 pb-4">
+            <div>
+                <h2 class="text-lg font-bold text-google-charcoal dark:text-white flex items-center gap-2">
+                    <span class="text-xl">🌸</span>
+                    <span>Flower Check-in Console</span>
+                </h2>
+                <p class="text-xs text-google-grey dark:text-slate-400">Select the squad standing at your booth, then click the flower they delivered!</p>
+            </div>
+            <div id="award-feedback" class="hidden px-3 py-1.5 rounded-lg text-xs font-bold"></div>
+        </div>
+
+        <!-- Step 1: Select Squad -->
+        <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-google-grey dark:text-slate-300 mb-2">
+                1. Select Arriving Squad:
+            </label>
+            <div class="flex flex-wrap gap-2.5" id="squad-selector-buttons">
+                {% for sq in squads %}
+                <button type="button" onclick="selectActiveSquad({{ sq.id }}, '{{ sq.name }}', this)"
+                        class="squad-btn px-4 py-2.5 rounded-xl border text-xs sm:text-sm font-bold transition flex items-center gap-2
+                        {% if loop.first %} bg-google-blue text-white border-google-blue shadow-google active-squad
+                        {% else %} bg-google-offwhite dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-google-charcoal dark:text-slate-300 border-google-border dark:border-slate-700 {% endif %}">
+                    <span>🛡️</span>
+                    <span>{{ sq.name }}</span>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-mono font-bold {% if loop.first %} bg-white/20 text-white {% else %} bg-white dark:bg-slate-800 text-google-grey dark:text-slate-300 border border-google-border dark:border-slate-700 {% endif %}" id="squad-pill-count-{{ sq.id }}">
+                        {{ sq.flowers_count }}/{{ flowers|length }}
+                    </span>
+                </button>
+                {% else %}
+                <p class="text-xs text-google-grey dark:text-slate-400 italic">No squads registered yet. Add a team below!</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Step 2: 20 Flowers Grid for the Active Squad -->
+        <div>
+            <div class="flex items-center justify-between mb-3">
+                <label class="block text-xs font-bold uppercase tracking-wider text-google-grey dark:text-slate-300">
+                    2. Click Flower to Award to: <span id="active-squad-label" class="text-google-blue font-bold text-sm">
+                        {% if squads %}{{ squads[0].name }}{% else %}No squad selected{% endif %}
+                    </span>
+                </label>
+                <span class="text-xs text-google-grey dark:text-slate-400">Green = Collected • Click Blue to Award</span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3" id="flowers-award-grid">
+                {% for f in flowers %}
+                {% set active_sq_id = squads[0].id if squads else 0 %}
+                {% set is_awarded = (active_sq_id, f.id) in award_dict %}
+                
+                <div class="flower-box relative rounded-xl p-3.5 border transition flex flex-col justify-between
+                     {% if is_awarded %} bg-pastel-green/70 dark:bg-emerald-950/50 border-green-300 dark:border-emerald-600 text-green-950 dark:text-emerald-200
+                     {% else %} bg-google-offwhite dark:bg-slate-900 hover:bg-white dark:hover:bg-slate-800 border-google-border dark:border-slate-700 text-google-charcoal dark:text-slate-300 {% endif %}"
+                     id="flower-box-{{ f.id }}" data-flower-id="{{ f.id }}">
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="font-mono font-bold text-xs px-2 py-0.5 rounded
+                                {% if is_awarded %} bg-green-600 text-white {% else %} bg-white dark:bg-slate-800 text-google-grey dark:text-slate-300 border border-google-border dark:border-slate-700 {% endif %}"
+                                id="f-badge-{{ f.id }}">
+                                #{{ f.id }}
+                            </span>
+                            <span class="text-[11px] font-mono font-bold text-amber-700 dark:text-amber-400">{{ f.points }} MP</span>
+                        </div>
+                        <h4 class="font-bold text-xs text-google-charcoal dark:text-white leading-tight line-clamp-1">{{ f.name }}</h4>
+                        <p class="text-[10px] text-google-grey dark:text-slate-400 mt-0.5 line-clamp-1">📍 {{ f.location }}</p>
+                    </div>
+
+                    <div class="mt-3 pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between" id="f-action-{{ f.id }}">
+                        {% if is_awarded %}
+                            <span class="text-[10px] font-bold text-green-800 dark:text-green-300">✓ COLLECTED</span>
+                            <button type="button" onclick="revokeFlower({{ f.id }})" class="text-[10px] text-red-600 hover:text-red-700 dark:text-rose-400 underline font-semibold">
+                                Undo
+                            </button>
+                        {% else %}
+                            <button type="button" onclick="awardFlower({{ f.id }})" class="w-full py-1.5 rounded-lg bg-google-blue hover:bg-blue-600 text-white text-xs font-bold transition flex items-center justify-center gap-1 shadow-xs">
+                                <span>+</span> <span>Award Flower</span>
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SQUAD REGISTRATION & BONUS POINTS ROW -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Register New Squad Card -->
+        <div class="bg-white dark:bg-google-carddark border border-google-border dark:border-slate-800 rounded-2xl p-6 shadow-soft space-y-4">
+            <div>
+                <h3 class="text-base font-bold text-google-charcoal dark:text-white flex items-center gap-2">
+                    <span>⚔️</span> Register Squad at Booth
+                </h3>
+                <p class="text-xs text-google-grey dark:text-slate-400">Quickly add newly formed teams as they arrive.</p>
+            </div>
+
+            <!-- Preset Buttons with Google Pastels -->
+            <div>
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-google-grey dark:text-slate-400 mb-1.5">Theme Presets</label>
+                <div class="flex flex-wrap gap-1.5">
+                    <button type="button" onclick="presetReg('Black Bulls', 'google-yellow')" class="px-2.5 py-1 rounded-lg bg-pastel-yellow text-xs font-bold text-amber-900 border border-amber-300 hover:brightness-95">🐂 Black Bulls</button>
+                    <button type="button" onclick="presetReg('Golden Dawn', 'google-blue')" class="px-2.5 py-1 rounded-lg bg-pastel-blue text-xs font-bold text-blue-900 border border-blue-300 hover:brightness-95">✨ Golden Dawn</button>
+                    <button type="button" onclick="presetReg('Crimson Lions', 'google-red')" class="px-2.5 py-1 rounded-lg bg-pastel-red text-xs font-bold text-red-900 border border-red-300 hover:brightness-95">🦁 Crimson Lions</button>
+                    <button type="button" onclick="presetReg('Green Mantis', 'google-green')" class="px-2.5 py-1 rounded-lg bg-pastel-green text-xs font-bold text-green-900 border border-green-300 hover:brightness-95">🦗 Green Mantis</button>
+                </div>
+            </div>
+
+            <form id="reg-squad-form" onsubmit="handleRegisterSquad(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-google-charcoal dark:text-slate-300 mb-1">Squad Name *</label>
+                    <input type="text" id="reg-name" required placeholder="e.g. Silver Eagles Coders" class="w-full bg-google-offwhite dark:bg-slate-900 border border-google-border dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-google-charcoal dark:text-white focus:outline-none focus:ring-2 focus:ring-google-blue">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-google-charcoal dark:text-slate-300 mb-1">Captain *</label>
+                        <input type="text" id="reg-captain" required placeholder="Leader's Name" class="w-full bg-google-offwhite dark:bg-slate-900 border border-google-border dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-google-charcoal dark:text-white focus:outline-none focus:ring-2 focus:ring-google-blue">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-google-charcoal dark:text-slate-300 mb-1">Theme Color</label>
+                        <select id="reg-color" class="w-full bg-google-offwhite dark:bg-slate-900 border border-google-border dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-google-charcoal dark:text-white focus:outline-none">
+                            <option value="google-blue">🔵 Google Blue</option>
+                            <option value="google-red">🔴 Google Red</option>
+                            <option value="google-yellow">🟡 Google Yellow</option>
+                            <option value="google-green">🟢 Google Green</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-google-charcoal dark:text-slate-300 mb-1">Team Members (Comma-separated)</label>
+                    <input type="text" id="reg-members" placeholder="e.g. Sarah, Youssef, Amina" class="w-full bg-google-offwhite dark:bg-slate-900 border border-google-border dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-google-charcoal dark:text-white focus:outline-none focus:ring-2 focus:ring-google-green">
+                </div>
+
+                <button type="submit" class="w-full py-2.5 rounded-xl bg-google-blue hover:bg-blue-600 text-white text-xs font-bold shadow-google transition">
+                    + Register Squad
+                </button>
+            </form>
+        </div>
+
+        <!-- Adjust Points & Registered Squads List -->
+        <div class="space-y-6">
+            <!-- Bonus Points Form -->
+            <div class="bg-white dark:bg-google-carddark border border-google-border dark:border-slate-800 rounded-2xl p-6 shadow-soft space-y-3">
+                <div>
+                    <h3 class="text-base font-bold text-google-charcoal dark:text-white flex items-center gap-2">
+                        <span>⚡</span> Award Bonus Mana Points (MP)
+                    </h3>
+                    <p class="text-xs text-google-grey dark:text-slate-400">Add points for solving GDG booth quizzes or team spirit.</p>
+                </div>
+
+                <form action="{{ url_for('api_admin_bonus_points') }}" method="POST" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-google-grey dark:text-slate-300 mb-1">Select Squad</label>
+                            <select name="squad_id" class="w-full bg-google-offwhite dark:bg-slate-900 border border-google-border dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-google-charcoal dark:text-white focus:outline-none">
+                                {% for sq in squads %}
+                                <option value="{{ sq.id }}">{{ sq.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-google-grey dark:text-slate-300 mb-1">Bonus MP</label>
+                            <input type="number" name="points" value="25" class="w-full bg-google-offwhite dark:bg-slate-900 border border-google-border dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-amber-700 dark:text-amber-300 font-mono font-bold focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-google-grey dark:text-slate-300 mb-1">Reason</label>
+                        <input type="text" name="reason" placeholder="e.g. Solved Cloud Mini-Quiz" class="w-full bg-google-offwhite dark:bg-slate-900 border border-google-border dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-google-charcoal dark:text-white focus:outline-none">
+                    </div>
+
+                    <button type="submit" class="w-full py-2 rounded-xl bg-google-offwhite dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-slate-700 text-xs font-bold transition">
+                        Apply Bonus Points
+                    </button>
+                </form>
+            </div>
+
+            <!-- Existing Squads Mini List with Delete -->
+            <div class="bg-white dark:bg-google-carddark border border-google-border dark:border-slate-800 rounded-2xl p-6 shadow-soft space-y-3">
+                <h3 class="text-sm font-bold text-google-charcoal dark:text-white">Active Squads ({{ squads|length }})</h3>
+                <div class="max-h-40 overflow-y-auto space-y-2 pr-1">
+                    {% for sq in squads %}
+                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-google-offwhite dark:bg-slate-900 border border-google-border dark:border-slate-800 text-xs">
+                        <div>
+                            <span class="font-bold text-google-charcoal dark:text-white">{{ sq.name }}</span>
+                            <span class="text-google-grey dark:text-slate-400"> ({{ sq.flowers_count }}/{{ flowers|length }} flowers)</span>
+                        </div>
+                        <form action="{{ url_for('api_admin_delete_squad') }}" method="POST" onsubmit="return confirm('Remove squad {{ sq.name }}?');">
+                            <input type="hidden" name="squad_id" value="{{ sq.id }}">
+                            <button type="submit" class="text-red-600 hover:text-red-700 dark:text-rose-400 text-xs font-bold px-2 py-1 rounded-lg bg-pastel-red/60 dark:bg-rose-950/40 border border-red-200 dark:border-rose-800">
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODIFY FLOWERS & POINTS SECTION -->
+    <div class="bg-white dark:bg-google-carddark border border-google-border dark:border-slate-800 rounded-2xl p-6 shadow-soft space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-google-border dark:border-slate-800 pb-3">
+            <div>
+                <h3 class="text-base font-bold text-google-charcoal dark:text-white flex items-center gap-2">
+                    <span>🌸</span> Modify Flowers (Names, Points & Locations)
+                </h3>
+                <p class="text-xs text-google-grey dark:text-slate-400">Customize flower names, points value (MP), school locations, or riddles.</p>
+            </div>
+            <span class="text-xs font-mono text-google-grey dark:text-slate-400 bg-google-offwhite dark:bg-slate-900 px-2.5 py-1 rounded-full border border-google-border dark:border-slate-700 font-bold">
+                {{ flowers|length }} Flowers Loaded
+            </span>
+        </div>
+
+        <form action="{{ url_for('api_admin_add_flower') }}" method="POST" class="p-4 rounded-xl bg-google-offwhite dark:bg-slate-900 border border-green-300 dark:border-emerald-800 space-y-3">
+            <h4 class="text-sm font-bold text-google-charcoal dark:text-white">Add a Flower</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-google-grey dark:text-slate-400 mb-1">Flower Name</label>
+                    <input type="text" name="name" required class="w-full bg-white dark:bg-slate-950 border border-google-border dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-google-charcoal dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-google-grey dark:text-slate-400 mb-1">Theme Lore</label>
+                    <input type="text" name="character_theme" required class="w-full bg-white dark:bg-slate-950 border border-google-border dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-google-charcoal dark:text-slate-300">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-google-grey dark:text-slate-400 mb-1">School Location</label>
+                    <input type="text" name="location" required class="w-full bg-white dark:bg-slate-950 border border-google-border dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-google-charcoal dark:text-slate-300">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-google-grey dark:text-slate-400 mb-1">Points (MP)</label>
+                    <input type="number" name="points" min="0" value="100" required class="w-full bg-white dark:bg-slate-950 border border-google-border dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-amber-700 dark:text-amber-400 font-mono">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-[10px] uppercase font-bold text-google-grey dark:text-slate-400 mb-1">Grimoire Riddle</label>
+                    <textarea name="riddle" rows="2" required class="w-full bg-white dark:bg-slate-950 border border-google-border dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-google-charcoal dark:text-slate-300"></textarea>
+                </div>
+            </div>
+            <button type="submit" class="px-4 py-2 rounded-lg bg-google-blue hover:bg-blue-600 text-white text-xs font-bold transition">Add Flower</button>
+        </form>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for f in flowers %}
+            <form action="{{ url_for('api_admin_edit_flower') }}" method="POST" class="p-4 rounded-xl bg-google-offwhite dark:bg-slate-900 border border-google-border dark:border-slate-800 hover:border-slate-400 space-y-3 transition">
+                <input type="hidden" name="flower_id" value="{{ f.id }}">
+
+                <div class="flex items-center justify-between">
+                    <span class="font-mono font-bold text-xs px-2 py-0.5 rounded bg-white dark:bg-slate-800 text-google-charcoal dark:text-white border border-google-border dark:border-slate-700">
+                        Flower #{{ f.id }}
+                    </span>
+                    <div class="flex items-center gap-1.5">
+                        <label class="text-[11px] font-bold text-google-grey dark:text-slate-400 uppercase">Points (MP):</label>
+                        <input type="number" name="points" value="{{ f.points }}" required class="w-20 bg-white dark:bg-slate-950 border border-google-border dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs text-right text-amber-700 dark:text-amber-400 font-mono font-bold focus:outline-none focus:ring-1 focus:ring-google-yellow">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-google-grey dark:text-slate-400 mb-1">Flower Name</label>
+                    <input type="text" name="name" value="{{ f.name }}" required class="w-full bg-white dark:bg-slate-950 border border-google-border dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-google-charcoal dark:text-white focus:outline-none focus:ring-1 focus:ring-google-blue">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-google-grey dark:text-slate-400 mb-1">Theme Lore</label>
+                        <input type="text" name="character_theme" value="{{ f.character_theme }}" class="w-full bg-white dark:bg-slate-950 border border-google-border dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-google-charcoal dark:text-slate-300 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-google-grey dark:text-slate-400 mb-1">School Location</label>
+                        <input type="text" name="location" value="{{ f.location }}" class="w-full bg-white dark:bg-slate-950 border border-google-border dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-google-charcoal dark:text-slate-300 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-google-grey dark:text-slate-400 mb-1">Grimoire Riddle</label>
+                    <textarea name="riddle" rows="2" class="w-full bg-white dark:bg-slate-950 border border-google-border dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-google-charcoal dark:text-slate-300 focus:outline-none">{{ f.riddle }}</textarea>
+                </div>
+
+                <div class="flex items-center justify-between pt-1">
+                    <span class="text-[10px] text-google-grey dark:text-slate-500 font-mono">ID: {{ f.id }}</span>
+                    <button type="submit" class="px-3.5 py-1.5 rounded-lg bg-google-blue hover:bg-blue-600 text-white text-xs font-bold transition flex items-center gap-1 shadow-xs">
+                        <span>💾</span> Save Flower #{{ f.id }}
+                    </button>
+                </div>
+            </form>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- RECENT DISPATCHES / AUDIT LOG -->
+    <div class="bg-white dark:bg-google-carddark border border-google-border dark:border-slate-800 rounded-2xl p-6 shadow-soft space-y-3">
+        <h3 class="text-sm font-bold text-google-charcoal dark:text-white flex items-center gap-2">
+            <span>📜</span> Live Activity Feed
+        </h3>
+        <div class="max-h-48 overflow-y-auto space-y-2">
+            {% for ev in events %}
+            <div class="flex items-start gap-3 text-xs p-2.5 rounded-xl bg-google-offwhite dark:bg-slate-900 border border-google-border dark:border-slate-800">
+                <span class="font-mono text-google-grey dark:text-slate-500 text-[11px]">{{ ev.created_at[11:19] if ev.created_at else '' }}</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-white dark:bg-slate-800 text-google-charcoal dark:text-slate-300 border border-google-border dark:border-slate-700">{{ ev.event_type }}</span>
+                <span class="text-google-charcoal dark:text-slate-200">{{ ev.description }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Admin Interactivity Script (Only run when authenticated) -->
+    <script>
+        let activeSquadId = {% if squads and squads|length > 0 %}{{ squads[0].id }}{% else %}0{% endif %};
+        let activeSquadName = "{% if squads and squads|length > 0 %}{{ squads[0].name }}{% else %}None{% endif %}";
+        
+        const awardMatrix = {
+            {% if award_dict %}
+            {% for (sq_id, f_id), a in award_dict.items() %}
+            "{{ sq_id }}-{{ f_id }}": true,
+            {% endfor %}
+            {% endif %}
+        };
+
+        const flowersInfo = [
+            {% if flowers %}
+            {% for f in flowers %}
+            { id: {{ f.id }}, name: "{{ f.name }}", points: {{ f.points }}, location: "{{ f.location }}" },
+            {% endfor %}
+            {% endif %}
+        ];
+
+        function selectActiveSquad(id, name, btn) {
+            activeSquadId = id;
+            activeSquadName = name;
+
+            document.querySelectorAll('.squad-btn').forEach(b => {
+                b.className = 'squad-btn px-4 py-2.5 rounded-xl border text-xs sm:text-sm font-bold transition flex items-center gap-2 bg-google-offwhite dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-google-charcoal dark:text-slate-300 border-google-border dark:border-slate-700';
+            });
+            btn.className = 'squad-btn px-4 py-2.5 rounded-xl border text-xs sm:text-sm font-bold transition flex items-center gap-2 bg-google-blue text-white border-google-blue shadow-google active-squad';
+
+            document.getElementById('active-squad-label').innerText = name;
+            refreshFlowersGrid();
+        }
+
+        function refreshFlowersGrid() {
+            flowersInfo.forEach(f => {
+                const isAwarded = awardMatrix[`${activeSquadId}-${f.id}`] === true;
+                const box = document.getElementById(`flower-box-${f.id}`);
+                const badge = document.getElementById(`f-badge-${f.id}`);
+                const actionContainer = document.getElementById(`f-action-${f.id}`);
+
+                if (!box || !actionContainer) return;
+
+                if (isAwarded) {
+                    box.className = 'flower-box relative rounded-xl p-3.5 border transition flex flex-col justify-between bg-pastel-green/70 dark:bg-emerald-950/50 border-green-300 dark:border-emerald-600 text-green-950 dark:text-emerald-200';
+                    if (badge) badge.className = 'font-mono font-bold text-xs px-2 py-0.5 rounded bg-green-600 text-white';
+                    actionContainer.innerHTML = `
+                        <span class="text-[10px] font-bold text-green-800 dark:text-green-300">✓ COLLECTED</span>
+                        <button type="button" onclick="revokeFlower(${f.id})" class="text-[10px] text-red-600 hover:text-red-700 dark:text-rose-400 underline font-semibold">Undo</button>
+                    `;
+                } else {
+                    box.className = 'flower-box relative rounded-xl p-3.5 border transition flex flex-col justify-between bg-google-offwhite dark:bg-slate-900 hover:bg-white dark:hover:bg-slate-800 border-google-border dark:border-slate-700 text-google-charcoal dark:text-slate-300';
+                    if (badge) badge.className = 'font-mono font-bold text-xs px-2 py-0.5 rounded bg-white dark:bg-slate-800 text-google-grey dark:text-slate-300 border border-google-border dark:border-slate-700';
+                    actionContainer.innerHTML = `
+                        <button type="button" onclick="awardFlower(${f.id})" class="w-full py-1.5 rounded-lg bg-google-blue hover:bg-blue-600 text-white text-xs font-bold transition flex items-center justify-center gap-1 shadow-xs">
+                            <span>+</span> <span>Award Flower</span>
+                        </button>
+                    `;
+                }
+            });
+        }
+
+        function awardFlower(flowerId) {
+            if (!activeSquadId) return alert('Select a squad first');
+
+            fetch('/api/admin/award-flower', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Admin-PIN': '10GDG-open10DAY26'
+                },
+                body: JSON.stringify({ squad_id: activeSquadId, flower_id: flowerId })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success') {
+                    awardMatrix[`${activeSquadId}-${flowerId}`] = true;
+                    refreshFlowersGrid();
+                    showFeedback(`✨ Awarded Flower #${flowerId} to ${d.squad_name}! (+${d.points} MP)`, 'success');
+                    
+                    const pill = document.getElementById(`squad-pill-count-${activeSquadId}`);
+                    if (pill) pill.innerText = `${d.new_flowers_count}/${flowersInfo.length}`;
+                } else {
+                    showFeedback(`⚠️ ${d.message}`, 'error');
+                }
+            })
+            .catch(() => {
+                showFeedback('⚠️ Network connection error', 'error');
+            });
+        }
+
+        function revokeFlower(flowerId) {
+            if (!confirm(`Undo award for Flower #${flowerId}?`)) return;
+
+            fetch('/api/admin/revoke-flower', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Admin-PIN': '10GDG-open10DAY26'
+                },
+                body: JSON.stringify({ squad_id: activeSquadId, flower_id: flowerId })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success') {
+                    delete awardMatrix[`${activeSquadId}-${flowerId}`];
+                    refreshFlowersGrid();
+                    showFeedback(`Revoked Flower #${flowerId}.`, 'info');
+                    setTimeout(() => location.reload(), 800);
+                }
+            });
+        }
+
+        function showFeedback(text, type) {
+            const el = document.getElementById('award-feedback');
+            if (!el) return;
+            el.innerText = text;
+            el.classList.remove('hidden', 'bg-pastel-green', 'text-green-950', 'bg-pastel-red', 'text-red-950');
+            el.classList.add('border');
+            if (type === 'success') el.classList.add('bg-pastel-green', 'text-green-950', 'border-green-300');
+            else if (type === 'error') el.classList.add('bg-pastel-red', 'text-red-950', 'border-red-300');
+            else el.classList.add('bg-slate-100', 'text-slate-800');
+            setTimeout(() => el.classList.add('hidden'), 3500);
+        }
+
+        function presetReg(name, color) {
+            document.getElementById('reg-name').value = name;
+            document.getElementById('reg-color').value = color;
+        }
+
+        function handleRegisterSquad(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value.trim();
+            const captain = document.getElementById('reg-captain').value.trim();
+            const members = document.getElementById('reg-members').value.trim();
+            const color = document.getElementById('reg-color').value;
+
+            fetch('/api/admin/register-squad', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Admin-PIN': '10GDG-open10DAY26'
+                },
+                body: JSON.stringify({ name, captain, members, color })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success') {
+                    alert(`✨ Squad ${name} registered! Reloading desk...`);
+                    location.reload();
+                } else {
+                    alert(`⚠️ ${d.message}`);
+                }
+            });
+        }
+    </script>
+
+    {% endif %}
+
+</div>
+{% endblock %}

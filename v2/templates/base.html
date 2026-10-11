@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Google Developer Groups • Black Clover Mana Hunt{% endblock %}</title>
+
+    <!-- Google Fonts: Google Sans alternative (Plus Jakarta Sans) & Google Sans Mono (JetBrains Mono) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        google: {
+                            blue: '#4285F4',
+                            green: '#34A853',
+                            yellow: '#F9AB00',
+                            red: '#EA4335',
+                            charcoal: '#202124',
+                            grey: '#5F6368',
+                            lightgrey: '#F1F3F4',
+                            border: '#DADCE0',
+                            offwhite: '#F8F9FA',
+                            black02: '#1E1E1E',
+                            carddark: '#2A2B2E'
+                        },
+                        pastel: {
+                            blue: '#C3ECF6',
+                            green: '#CCF6C5',
+                            yellow: '#FFE7A5',
+                            red: '#F8D8D8'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                        anime: ['"Cinzel"', 'serif']
+                    },
+                    boxShadow: {
+                        'google': '0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15)',
+                        'google-hover': '0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15)',
+                        'soft': '0 2px 6px rgba(60,64,67,0.08)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Google Brand Guidelines Typography Scale */
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        /* Material Design Elevation & Card styling */
+        .google-card {
+            border-radius: 1rem;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .google-card:hover {
+            transform: translateY(-1px);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #DADCE0; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #BDC1C6; }
+        .dark ::-webkit-scrollbar-thumb { background: #3C4043; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-google-offwhite dark:bg-google-black02 text-google-charcoal dark:text-slate-100 min-h-screen flex flex-col selection:bg-google-yellow selection:text-slate-900">
+
+    <!-- Top Google 4-Color Brand Bar -->
+    <div class="h-1 w-full flex">
+        <div class="h-full w-1/4 bg-google-blue"></div>
+        <div class="h-full w-1/4 bg-google-red"></div>
+        <div class="h-full w-1/4 bg-google-yellow"></div>
+        <div class="h-full w-1/4 bg-google-green"></div>
+    </div>
+
+    <!-- Friendly Navigation Header -->
+    <nav class="sticky top-0 z-50 bg-white/95 dark:bg-google-carddark/95 backdrop-blur-md border-b border-google-border dark:border-slate-800 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                
+                <!-- Official GDG Logo Lockup -->
+                <a href="{{ url_for('scoreboard') }}" class="flex items-center gap-3 group">
+                    <!-- Segmented GDG < > Logo according to Brand Guide -->
+                    <svg viewBox="0 0 160 96" fill="none" xmlns="http://www.w3.org/2000/svg" class="h-7 w-auto transform group-hover:scale-105 transition">
+                        <!-- Left bracket < (top red, bottom yellow) -->
+                        <path d="M52 18L18 48" stroke="#EA4335" stroke-width="16" stroke-linecap="round"/>
+                        <path d="M18 48L52 78" stroke="#F9AB00" stroke-width="16" stroke-linecap="round"/>
+                        <!-- Right bracket > (top blue, bottom green) -->
+                        <path d="M108 18L142 48" stroke="#4285F4" stroke-width="16" stroke-linecap="round"/>
+                        <path d="M142 48L108 78" stroke="#34A853" stroke-width="16" stroke-linecap="round"/>
+                    </svg>
+
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-google-charcoal dark:text-white text-base tracking-tight">Google Developer Groups</span>
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-pastel-yellow text-amber-900 border border-amber-300">Open Day</span>
+                        </div>
+                        <p class="text-xs text-google-grey dark:text-slate-400 font-medium">Black Clover • 20 Mana Flowers Scavenger Hunt</p>
+                    </div>
+                </a>
+
+                <!-- Navigation Links & Theme Toggle -->
+                <div class="flex items-center space-x-2 sm:space-x-3 text-xs sm:text-sm font-semibold">
+                    <a href="{{ url_for('scoreboard') }}" class="px-3 py-2 rounded-xl text-google-grey dark:text-slate-300 hover:text-google-charcoal dark:hover:text-white hover:bg-google-lightgrey dark:hover:bg-slate-800 transition flex items-center gap-1.5">
+                        <span>🏆</span> <span class="hidden sm:inline">Scoreboard</span>
+                    </a>
+                    <a href="{{ url_for('projector') }}" class="px-3 py-2 rounded-xl text-google-blue bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800 transition flex items-center gap-1.5">
+                        <span>📽️</span> <span class="hidden sm:inline">Projector View</span>
+                    </a>
+                    <a href="{{ url_for('admin') }}" class="px-3.5 py-2 rounded-xl bg-google-blue hover:bg-blue-600 text-white font-bold transition flex items-center gap-1.5 shadow-google hover:shadow-google-hover">
+                        <span>⚡</span> Admin Desk
+                    </a>
+
+                    <!-- Light / Dark Theme Toggle Button -->
+                    <button onclick="toggleTheme()" id="theme-btn" title="Toggle Clean Theme" class="p-2 rounded-xl bg-google-lightgrey dark:bg-slate-800 text-google-charcoal dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition border border-google-border dark:border-slate-700 text-sm">
+                        <span id="theme-icon">🌙</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </nav>
+
+    <!-- Warm Human Community Announcement Strip -->
+    <div class="bg-white dark:bg-google-carddark border-b border-google-border dark:border-slate-800 py-2 px-4 text-center text-xs">
+        <span class="inline-flex items-center gap-1.5 font-semibold text-google-charcoal dark:text-slate-200">
+            <span class="w-2 h-2 rounded-full bg-google-green animate-pulse"></span>
+            <span>Welcome to GDG Open Day!</span>
+            <span class="text-google-grey dark:text-slate-400 font-normal hidden sm:inline">• Teams find flowers in the school and check in at the GDG Welcome Booth.</span>
+        </span>
+    </div>
+
+    <!-- Flash Messages Banner -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="rounded-xl p-3 mb-3 text-xs sm:text-sm font-semibold flex items-center justify-between border
+                        {% if category == 'success' %} bg-pastel-green border-green-300 text-green-900
+                        {% elif category == 'danger' %} bg-pastel-red border-red-300 text-red-900
+                        {% elif category == 'warning' %} bg-pastel-yellow border-yellow-300 text-yellow-900
+                        {% else %} bg-pastel-blue border-blue-300 text-blue-900 {% endif %}">
+                        <div class="flex items-center gap-2">
+                            <span>{% if category == 'success' %}✨{% elif category == 'danger' %}⚠️{% else %}ℹ️{% endif %}</span>
+                            <span>{{ message }}</span>
+                        </div>
+                        <button onclick="this.parentElement.remove()" class="text-slate-500 hover:text-slate-900 font-bold">&times;</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Humanized Community Footer -->
+    <footer class="bg-white dark:bg-google-carddark border-t border-google-border dark:border-slate-800 mt-12 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-2.5">
+                    <svg viewBox="0 0 160 96" fill="none" class="h-6 w-auto">
+                        <path d="M52 18L18 48" stroke="#EA4335" stroke-width="16" stroke-linecap="round"/>
+                        <path d="M18 48L52 78" stroke="#F9AB00" stroke-width="16" stroke-linecap="round"/>
+                        <path d="M108 18L142 48" stroke="#4285F4" stroke-width="16" stroke-linecap="round"/>
+                        <path d="M142 48L108 78" stroke="#34A853" stroke-width="16" stroke-linecap="round"/>
+                    </svg>
+                    <div>
+                        <p class="text-xs font-bold text-google-charcoal dark:text-white">Google Developer Groups (GDG)</p>
+                        <p class="text-[11px] text-google-grey dark:text-slate-400">Open Day • Community Scavenger Hunt</p>
+                    </div>
+                </div>
+
+                <div class="text-center sm:text-right text-xs">
+                    <p class="font-bold text-google-charcoal dark:text-slate-200 font-anime">"Surpass your limits! Right here, right now!"</p>
+                    <p class="text-[11px] text-google-grey dark:text-slate-400 mt-0.5">Built with Google Developer Groups Brand Guidelines & Material Design</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Theme Toggle Controller -->
+    <script>
+        function initTheme() {
+            const saved = localStorage.getItem('gdg_theme');
+            if (saved === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.getElementById('theme-icon').innerText = '☀️';
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('theme-icon').innerText = '🌙';
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('gdg_theme', isDark ? 'dark' : 'light');
+            document.getElementById('theme-icon').innerText = isDark ? '☀️' : '🌙';
+        }
+
+        initTheme();
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

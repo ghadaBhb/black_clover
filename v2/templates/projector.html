@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Developer Groups • Stage Projector</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        google: {
+                            blue: '#4285F4',
+                            green: '#34A853',
+                            yellow: '#F9AB00',
+                            red: '#EA4335',
+                            black02: '#1E1E1E',
+                            carddark: '#2A2B2E',
+                            borderdark: '#3C4043'
+                        },
+                        pastel: {
+                            blue: '#C3ECF6',
+                            green: '#CCF6C5',
+                            yellow: '#FFE7A5',
+                            red: '#F8D8D8'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                        anime: ['"Cinzel"', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #1E1E1E; font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen p-6 sm:p-10 flex flex-col justify-between selection:bg-google-yellow selection:text-slate-900">
+
+    <!-- Top Stage Header (Brand Guide Lockup) -->
+    <header class="flex items-center justify-between border-b border-google-borderdark pb-4 mb-6">
+        <div class="flex items-center gap-4">
+            <!-- Segmented GDG Logo -->
+            <svg viewBox="0 0 160 96" fill="none" class="h-9 w-auto">
+                <path d="M52 18L18 48" stroke="#EA4335" stroke-width="16" stroke-linecap="round"/>
+                <path d="M18 48L52 78" stroke="#F9AB00" stroke-width="16" stroke-linecap="round"/>
+                <path d="M108 18L142 48" stroke="#4285F4" stroke-width="16" stroke-linecap="round"/>
+                <path d="M142 48L108 78" stroke="#34A853" stroke-width="16" stroke-linecap="round"/>
+            </svg>
+
+            <div>
+                <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                    <span>Google Developer Groups</span>
+                    <span class="text-xs px-2.5 py-0.5 rounded-full bg-pastel-yellow text-amber-950 font-bold uppercase tracking-wider">Open Day 2026</span>
+                </h1>
+                <p class="text-xs text-slate-400">Black Clover Scavenger Hunt • 20 Mana Flowers Tournament</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <span class="flex items-center gap-2 text-xs font-mono font-bold text-google-green bg-green-950/60 border border-green-800 px-3 py-1.5 rounded-xl">
+                <span class="w-2 h-2 rounded-full bg-google-green animate-ping"></span>
+                <span>AUDITORIUM SCREEN</span>
+            </span>
+            <button onclick="toggleFS()" class="text-xs font-mono bg-google-carddark hover:bg-slate-700 px-3 py-1.5 rounded-xl border border-google-borderdark text-slate-300">
+                [ Fullscreen (F) ]
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Stage Content -->
+    <main class="flex-grow space-y-6">
+        
+        <!-- Live Ticker Alert Banner -->
+        <div class="bg-gradient-to-r from-blue-950/60 via-google-carddark to-indigo-950/60 border border-blue-500/40 rounded-2xl p-4 shadow-xl flex items-center justify-between">
+            <div class="flex items-center gap-3.5">
+                <span class="text-xl animate-bounce">📢</span>
+                <div class="text-sm">
+                    <span class="font-bold text-google-yellow uppercase tracking-wider mr-2">Latest Check-in:</span>
+                    <span id="proj-ticker" class="text-white font-bold">
+                        {% if recent_events %}
+                            {{ recent_events[0].description }}
+                        {% else %}
+                            Squads are exploring the campus! Deliver flowers to the GDG Booth.
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="hidden sm:block text-xs font-mono text-slate-400">
+                Campus Scavenger Hunt
+            </div>
+        </div>
+
+        <!-- 3-Column Podium Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% if squads|length >= 1 %}
+            <!-- 1st Place Wizard King -->
+            {% set k = squads[0] %}
+            <div class="md:order-2 bg-gradient-to-b from-amber-950/40 via-google-carddark to-slate-900 border-2 border-google-yellow rounded-3xl p-6 shadow-2xl text-center transform md:-translate-y-2">
+                <div class="inline-block px-4 py-1 rounded-full bg-pastel-yellow text-amber-950 text-xs font-extrabold uppercase tracking-widest shadow-md">
+                    👑 CURRENT WIZARD KING (1ST)
+                </div>
+
+                <div class="text-4xl my-3">🥇</div>
+                <h2 id="podium-1-name" class="text-3xl font-extrabold text-white tracking-tight">{{ k.name }}</h2>
+                <p id="podium-1-captain" class="text-xs text-amber-300 mt-1 font-semibold">Captain: {{ k.captain }}</p>
+
+                <div class="mt-4 bg-slate-900/90 border border-google-borderdark rounded-2xl p-4 flex justify-around items-center">
+                    <div>
+                        <div id="podium-1-flowers" class="text-4xl font-mono font-black text-white">{{ k.flowers_count }}</div>
+                        <div class="text-[10px] text-slate-400 uppercase font-bold">Flowers / 20</div>
+                    </div>
+                    <div class="h-10 w-px bg-google-borderdark"></div>
+                    <div>
+                        <div id="podium-1-points" class="text-4xl font-mono font-black text-google-yellow">{{ k.total_points }}</div>
+                        <div class="text-[10px] text-slate-400 uppercase font-bold">Mana Points</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2nd Place -->
+            {% if squads|length >= 2 %}
+            {% set s2 = squads[1] %}
+            <div class="md:order-1 bg-google-carddark border border-slate-600 rounded-3xl p-6 text-center shadow-xl flex flex-col justify-between">
+                <div>
+                    <div class="inline-block px-3 py-0.5 rounded-full bg-slate-700 text-slate-200 text-xs font-extrabold uppercase tracking-widest">
+                        2ND RANK
+                    </div>
+                    <div class="text-3xl my-2">🥈</div>
+                    <h3 class="text-2xl font-bold text-white">{{ s2.name }}</h3>
+                    <p class="text-xs text-slate-400">Captain: {{ s2.captain }}</p>
+                </div>
+
+                <div class="mt-4 bg-slate-900/90 border border-google-borderdark rounded-2xl p-3 flex justify-around">
+                    <div>
+                        <div class="text-2xl font-mono font-bold text-white">{{ s2.flowers_count }}/20</div>
+                        <div class="text-[10px] text-slate-400 uppercase font-bold">Flowers</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-mono font-bold text-slate-200">{{ s2.total_points }}</div>
+                        <div class="text-[10px] text-slate-400 uppercase font-bold">Points</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 3rd Place -->
+            {% if squads|length >= 3 %}
+            {% set s3 = squads[2] %}
+            <div class="md:order-3 bg-google-carddark border border-amber-900/60 rounded-3xl p-6 text-center shadow-xl flex flex-col justify-between">
+                <div>
+                    <div class="inline-block px-3 py-0.5 rounded-full bg-amber-950 text-amber-300 text-xs font-extrabold uppercase tracking-widest border border-amber-800">
+                        3RD RANK
+                    </div>
+                    <div class="text-3xl my-2">🥉</div>
+                    <h3 class="text-2xl font-bold text-white">{{ s3.name }}</h3>
+                    <p class="text-xs text-slate-400">Captain: {{ s3.captain }}</p>
+                </div>
+
+                <div class="mt-4 bg-slate-900/90 border border-google-borderdark rounded-2xl p-3 flex justify-around">
+                    <div>
+                        <div class="text-2xl font-mono font-bold text-white">{{ s3.flowers_count }}/20</div>
+                        <div class="text-[10px] text-slate-400 uppercase font-bold">Flowers</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-mono font-bold text-amber-400">{{ s3.total_points }}</div>
+                        <div class="text-[10px] text-slate-400 uppercase font-bold">Points</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+
+        <!-- Full Roster Table for Large Screen -->
+        <div class="bg-google-carddark border border-google-borderdark rounded-2xl overflow-hidden shadow-2xl">
+            <table class="w-full text-left text-sm">
+                <thead>
+                    <tr class="bg-slate-900/80 text-slate-400 text-xs uppercase font-extrabold border-b border-google-borderdark">
+                        <th class="py-3 px-4 text-center w-16">Rank</th>
+                        <th class="py-3 px-4">Squad Name</th>
+                        <th class="py-3 px-4">Captain & Members</th>
+                        <th class="py-3 px-4 text-center">Flowers Found</th>
+                        <th class="py-3 px-4 text-right">Mana Points</th>
+                    </tr>
+                </thead>
+                <tbody id="proj-tbody" class="divide-y divide-google-borderdark font-medium">
+                    {% for sq in squads %}
+                    <tr class="hover:bg-slate-800/40">
+                        <td class="py-3 px-4 text-center font-mono font-bold">{{ loop.index }}</td>
+                        <td class="py-3 px-4 font-bold text-white">{{ sq.name }}</td>
+                        <td class="py-3 px-4 text-slate-400 text-xs">{{ sq.captain }} {% if sq.members %}({{ sq.members }}){% endif %}</td>
+                        <td class="py-3 px-4 text-center font-mono font-bold text-google-yellow">{{ sq.flowers_count }} / 20</td>
+                        <td class="py-3 px-4 text-right font-mono font-black text-amber-300 text-base">{{ sq.total_points }} MP</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+
+    <!-- Bottom Stage Footer -->
+    <footer class="mt-6 pt-4 border-t border-google-borderdark text-center text-xs text-slate-500">
+        Google Developer Groups • Open Day Black Clover Scavenger Hunt • Black 02 Auditorium Display
+    </footer>
+
+    <script>
+        function toggleFS() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'f' || e.key === 'F') toggleFS();
+        });
+
+        let lastAwardsCount = -1;
+
+        function poll() {
+            fetch('/api/scoreboard')
+                .then(r => r.json())
+                .then(d => {
+                    if (d.status === 'success') {
+                        if (d.recent_events && d.recent_events.length > 0) {
+                            document.getElementById('proj-ticker').innerText = d.recent_events[0].description;
+                        }
+
+                        if (lastAwardsCount !== -1 && d.total_awards > lastAwardsCount) {
+                            if (typeof confetti === 'function') {
+                                confetti({
+                                    particleCount: 80,
+                                    spread: 70,
+                                    colors: ['#4285F4', '#EA4335', '#F9AB00', '#34A853', '#FFFFFF']
+                                });
+                            }
+                        }
+                        lastAwardsCount = d.total_awards;
+
+                        const tbody = document.getElementById('proj-tbody');
+                        if (tbody && d.squads) {
+                            let h = '';
+                            d.squads.forEach((sq, i) => {
+                                h += `
+                                <tr class="hover:bg-slate-800/40">
+                                    <td class="py-3 px-4 text-center font-mono font-bold">${i + 1}</td>
+                                    <td class="py-3 px-4 font-bold text-white">${sq.name}</td>
+                                    <td class="py-3 px-4 text-slate-400 text-xs">${sq.captain}</td>
+                                    <td class="py-3 px-4 text-center font-mono font-bold text-google-yellow">${sq.flowers_count} / 20</td>
+                                    <td class="py-3 px-4 text-right font-mono font-black text-amber-300 text-base">${sq.total_points} MP</td>
+                                </tr>`;
+                            });
+                            tbody.innerHTML = h;
+                        }
+                    }
+                })
+                .catch(() => {});
+        }
+        setInterval(poll, 3000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}Live Standings • GDG Open Day Black Clover Scavenger Hunt{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Hero / Welcome Header -->
+    <div class="bg-white dark:bg-google-carddark border border-google-border dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-soft relative overflow-hidden">
+        <!-- Google 4-Color Accent Corner -->
+        <div class="absolute -top-10 -right-10 w-44 h-44 rounded-full bg-pastel-blue/40 dark:bg-blue-900/20 blur-2xl pointer-events-none"></div>
+
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="space-y-2 max-w-2xl">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pastel-blue dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-xs font-bold text-blue-900 dark:text-blue-300">
+                    <span class="w-2 h-2 rounded-full bg-google-blue"></span>
+                    <span>GDG Open Day Community Tournament</span>
+                </div>
+                <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-google-charcoal dark:text-white">
+                    The 20 Mana Flowers Scavenger Hunt
+                </h1>
+                <p class="text-xs sm:text-sm text-google-grey dark:text-slate-300 leading-relaxed">
+                    20 enchanted flowers are hidden throughout the school! Teams discover them, bring them to the <span class="font-bold text-google-charcoal dark:text-white">GDG Welcome Booth</span>, and score Mana Points (MP) to become the <span class="font-bold text-amber-600 dark:text-amber-400">Wizard King</span>.
+                </p>
+            </div>
+
+            <!-- Total Event Statistics -->
+            <div class="flex items-center gap-3 bg-google-offwhite dark:bg-slate-900 p-4 rounded-xl border border-google-border dark:border-slate-800 self-start md:self-center">
+                <div class="text-center px-3">
+                    <div id="stat-total-awards" class="text-3xl font-black font-mono text-google-blue">{{ total_awards }}</div>
+                    <div class="text-[11px] font-bold uppercase text-google-grey dark:text-slate-400">Total Finds</div>
+                </div>
+                <div class="h-8 w-px bg-google-border dark:bg-slate-700"></div>
+                <div class="text-center px-3">
+                    <div class="text-3xl font-black font-mono text-google-green">20</div>
+                    <div class="text-[11px] font-bold uppercase text-google-grey dark:text-slate-400">Hidden Flowers</div>
+                </div>
+                <div class="h-8 w-px bg-google-border dark:bg-slate-700"></div>
+                <div class="text-center px-3">
+                    <div class="text-3xl font-black font-mono text-google-yellow">{{ total_squads }}</div>
+                    <div class="text-[11px] font-bold uppercase text-google-grey dark:text-slate-400">Active Squads</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Event Ticker (Material Card) -->
+    <div class="bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/60 rounded-xl p-3.5 flex items-center justify-between shadow-xs">
+        <div class="flex items-center gap-3">
+            <span class="text-lg">📢</span>
+            <div class="text-xs text-google-charcoal dark:text-slate-200">
+                <span class="font-bold uppercase tracking-wider text-blue-800 dark:text-blue-300 mr-2">Latest Check-in:</span>
+                <span id="latest-ticker-text" class="font-medium">
+                    {% if recent_events %}
+                        {{ recent_events[0].description }}
+                    {% else %}
+                        Tournament is active! Deliver found flowers to the GDG Booth.
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        <a href="{{ url_for('projector') }}" class="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-google-blue hover:underline whitespace-nowrap">
+            <span>Projector Mode</span> &rarr;
+        </a>
+    </div>
+
+    <!-- 1st Place Champion Spotlight (Friendly Warm Card) -->
+    {% if squads|length >= 1 %}
+    {% set king = squads[0] %}
+    <div class="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 dark:from-amber-950/20 dark:via-google-carddark dark:to-slate-900 border-2 border-amber-300 dark:border-amber-500/50 rounded-2xl p-6 sm:p-8 shadow-soft relative overflow-hidden">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="space-y-2">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pastel-yellow border border-amber-300 text-xs font-black text-amber-900 uppercase tracking-wider">
+                    <span>👑</span> CURRENT LEADER • WIZARD KING
+                </div>
+                <h2 id="king-name" class="text-3xl sm:text-4xl font-extrabold text-google-charcoal dark:text-white tracking-tight">
+                    {{ king.name }}
+                </h2>
+                <p class="text-xs sm:text-sm text-google-grey dark:text-slate-300">
+                    Squad Captain: <b id="king-captain" class="text-google-charcoal dark:text-white">{{ king.captain }}</b>
+                    {% if king.members %}
+                    • <span class="text-google-grey dark:text-slate-400">Team: {{ king.members }}</span>
+                    {% endif %}
+                </p>
+                {% if king.motto %}
+                <p class="text-xs text-amber-800 dark:text-amber-300 italic font-medium">"{{ king.motto }}"</p>
+                {% endif %}
+            </div>
+
+            <!-- King Score Box -->
+            <div class="flex items-center gap-6 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-700/40 p-4 rounded-xl shadow-xs justify-around min-w-[240px]">
+                <div class="text-center">
+                    <div id="king-flowers" class="text-3xl font-black font-mono text-google-charcoal dark:text-white">{{ king.flowers_count }}</div>
+                    <div class="text-[11px] font-bold uppercase text-google-grey dark:text-slate-400">Flowers / 20</div>
+                </div>
+                <div class="h-10 w-px bg-google-border dark:bg-slate-700"></div>
+                <div class="text-center">
+                    <div id="king-points" class="text-3xl font-black font-mono text-amber-600 dark:text-amber-400">{{ king.total_points }}</div>
+                    <div class="text-[11px] font-bold uppercase text-google-grey dark:text-slate-400">Mana Points</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Standings Table & 20-Flowers Retrieval Map -->
+    <div class="bg-white dark:bg-google-carddark border border-google-border dark:border-slate-800 rounded-2xl shadow-soft overflow-hidden">
+        <div class="px-6 py-4 border-b border-google-border dark:border-slate-800 flex items-center justify-between">
+            <h3 class="font-bold text-google-charcoal dark:text-white text-base flex items-center gap-2">
+                <span>📊</span> Squad Rankings & Flowers Checklist
+            </h3>
+            <span class="text-xs text-google-grey dark:text-slate-400 flex items-center gap-1.5 font-medium">
+                <span class="w-2 h-2 rounded-full bg-google-green animate-pulse"></span>
+                <span>Live Standings</span>
+            </span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                    <tr class="bg-google-offwhite dark:bg-slate-900 text-[11px] font-bold uppercase tracking-wider text-google-grey dark:text-slate-400 border-b border-google-border dark:border-slate-800">
+                        <th class="py-3 px-4 text-center w-14">Rank</th>
+                        <th class="py-3 px-4">Squad & Members</th>
+                        <th class="py-3 px-4 text-center">Flowers Found</th>
+                        <th class="py-3 px-4">Flowers Map (#1 to #20)</th>
+                        <th class="py-3 px-4 text-right">Mana Points</th>
+                    </tr>
+                </thead>
+                <tbody id="squads-table-body" class="divide-y divide-google-border dark:divide-slate-800/80">
+                    {% for sq in squads %}
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition {% if loop.index == 1 %}bg-amber-50/40 dark:bg-amber-950/10{% endif %}">
+                        <!-- Rank Medal -->
+                        <td class="py-4 px-4 text-center">
+                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full font-mono font-bold text-xs
+                                {% if loop.index == 1 %} bg-pastel-yellow text-amber-900 border border-amber-300 font-extrabold
+                                {% elif loop.index == 2 %} bg-slate-200 text-slate-800 border border-slate-300
+                                {% elif loop.index == 3 %} bg-orange-100 text-orange-900 border border-orange-200
+                                {% else %} bg-google-lightgrey dark:bg-slate-800 text-google-grey dark:text-slate-300 {% endif %}">
+                                {{ loop.index }}
+                            </span>
+                        </td>
+
+                        <!-- Squad Name & Details -->
+                        <td class="py-4 px-4">
+                            <div class="font-bold text-google-charcoal dark:text-white text-base flex items-center gap-2">
+                                <span>{{ sq.name }}</span>
+                                {% if loop.index == 1 %}<span class="text-xs">👑</span>{% endif %}
+                            </div>
+                            <div class="text-xs text-google-grey dark:text-slate-400 mt-0.5">
+                                Captain: <span class="font-semibold text-google-charcoal dark:text-slate-200">{{ sq.captain }}</span>
+                                {% if sq.members %}
+                                • <span class="text-slate-500 dark:text-slate-400 text-[11px]">{{ sq.members }}</span>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        <!-- Flowers Count -->
+                        <td class="py-4 px-4 text-center">
+                            <div class="font-mono font-bold text-base text-google-charcoal dark:text-white">
+                                {{ sq.flowers_count }} <span class="text-xs font-normal text-google-grey dark:text-slate-400">/ 20</span>
+                            </div>
+                            <div class="w-20 mx-auto bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 mt-1 overflow-hidden">
+                                <div class="bg-gradient-to-r from-google-blue to-google-green h-full rounded-full"
+                                     style="width: {{ (sq.flowers_count / 20 * 100)|round }}%"></div>
+                            </div>
+                        </td>
+
+                        <!-- 20-Flowers Retrieval Map -->
+                        <td class="py-4 px-4">
+                            <div class="flex flex-wrap gap-1 max-w-sm">
+                                {% for f in flowers %}
+                                {% set found = (sq.id, f.id) in award_set %}
+                                <span class="w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-mono font-bold transition
+                                    {% if found %} bg-pastel-green text-green-900 border border-green-300 font-extrabold shadow-xs
+                                    {% else %} bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 border border-slate-200 dark:border-slate-700 {% endif %}"
+                                    title="Flower #{{ f.id }}: {{ f.name }} ({{ 'Collected' if found else 'Still Missing' }})">
+                                    {{ f.id }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </td>
+
+                        <!-- Mana Points -->
+                        <td class="py-4 px-4 text-right">
+                            <span class="font-mono font-black text-lg text-amber-600 dark:text-amber-400">
+                                {{ sq.total_points }}
+                            </span>
+                            <span class="text-xs text-google-grey dark:text-slate-500 font-mono">MP</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Sound & Auto Polling Script -->
+<script>
+    let lastAwardsCount = {{ total_awards }};
+
+    function playSuccessChime() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const now = ctx.currentTime;
+            [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now + i * 0.08);
+                gain.gain.setValueAtTime(0.12, now + i * 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.35);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now + i * 0.08);
+                osc.stop(now + i * 0.08 + 0.4);
+            });
+        } catch(e) {}
+    }
+
+    function pollScoreboard() {
+        fetch('/api/scoreboard')
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    document.getElementById('stat-total-awards').innerText = data.total_awards;
+                    
+                    if (data.recent_events && data.recent_events.length > 0) {
+                        document.getElementById('latest-ticker-text').innerText = data.recent_events[0].description;
+                    }
+
+                    if (data.total_awards > lastAwardsCount) {
+                        playSuccessChime();
+                        if (typeof confetti === 'function') {
+                            confetti({ particleCount: 60, spread: 50, origin: { y: 0.6 } });
+                        }
+                        lastAwardsCount = data.total_awards;
+                        updateTable(data.squads, data.total_flowers);
+                    }
+                }
+            })
+            .catch(() => {});
+    }
+
+    function updateTable(squads, totalFlowers) {
+        const tbody = document.getElementById('squads-table-body');
+        if (!tbody || !squads) return;
+
+        let html = '';
+        squads.forEach((sq, idx) => {
+            const rank = idx + 1;
+            const badgeClass = rank === 1 ? 'bg-pastel-yellow text-amber-900 border border-amber-300 font-extrabold' :
+                               (rank === 2 ? 'bg-slate-200 text-slate-800 border border-slate-300' :
+                               (rank === 3 ? 'bg-orange-100 text-orange-900 border border-orange-200' : 'bg-google-lightgrey dark:bg-slate-800 text-google-grey dark:text-slate-300'));
+
+            let flowersPills = '';
+            for (let i = 1; i <= 20; i++) {
+                const found = sq.awarded_ids && sq.awarded_ids.includes(i);
+                flowersPills += `<span class="w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-mono font-bold ${found ? 'bg-pastel-green text-green-900 border border-green-300 font-extrabold' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 border border-slate-200 dark:border-slate-700'}">${i}</span>`;
+            }
+
+            html += `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition ${rank === 1 ? 'bg-amber-50/40 dark:bg-amber-950/10' : ''}">
+                <td class="py-4 px-4 text-center">
+                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full font-mono font-bold text-xs ${badgeClass}">
+                        ${rank}
+                    </span>
+                </td>
+                <td class="py-4 px-4">
+                    <div class="font-bold text-google-charcoal dark:text-white text-base flex items-center gap-2">
+                        <span>${sq.name}</span>
+                        ${rank === 1 ? '<span class="text-xs">👑</span>' : ''}
+                    </div>
+                    <div class="text-xs text-google-grey dark:text-slate-400 mt-0.5">
+                        Captain: <span class="font-semibold text-google-charcoal dark:text-slate-200">${sq.captain}</span>
+                        ${sq.members ? ` • <span class="text-slate-500 dark:text-slate-400 text-[11px]">${sq.members}</span>` : ''}
+                    </div>
+                </td>
+                <td class="py-4 px-4 text-center">
+                    <div class="font-mono font-bold text-base text-google-charcoal dark:text-white">
+                        ${sq.flowers_count} <span class="text-xs font-normal text-google-grey dark:text-slate-400">/ 20</span>
+                    </div>
+                </td>
+                <td class="py-4 px-4">
+                    <div class="flex flex-wrap gap-1 max-w-sm">
+                        ${flowersPills}
+                    </div>
+                </td>
+                <td class="py-4 px-4 text-right">
+                    <span class="font-mono font-black text-lg text-amber-600 dark:text-amber-400">
+                        ${sq.total_points}
+                    </span>
+                    <span class="text-xs text-google-grey dark:text-slate-500 font-mono">MP</span>
+                </td>
+            </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+
+    setInterval(pollScoreboard, 3000);
+</script>
+{% endblock %}
